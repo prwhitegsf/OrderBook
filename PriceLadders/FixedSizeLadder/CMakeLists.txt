@@ -1,0 +1,1 @@
+add_library(PriceLadders FixedSizeLadder.cpp)
