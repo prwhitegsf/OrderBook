@@ -1,8 +1,8 @@
 #include <iostream>
 #include <variant>
-#include "OrderTypes/ClientOrders/ClientOrders.h"
-#include "OrderTypes/QueuedOrders/QueuedOrders.h"
 #include <algorithm>
+#include "OrderTypes/ClientOrders/ClientOrders.h"
+#include "PriceLadders/FixedSizeLadder/FixedSizeLadder.h"
 #include "Orderbook/Orderbook.h"
 #include "Matchers/FIFO/Fifo.h"
 #include "Instrument/Instrument.h"
@@ -10,62 +10,20 @@
 int main()
 {
 
+    auto instrument = std::make_shared<Instrument>();
+    Fifo<FixedSizeLadder> fifo;
+    Orderbook<Fifo<FixedSizeLadder>,FixedSizeLadder> ob(instrument,FixedSizeLadder(instrument),fifo);
 
-    BuyLimitOrder buy_order(1,1,10,Duration::DAY);
-    SellLimitOrder sell_order(1,1,10.5,Duration::DAY);
-    using ClientOrder = std::variant<BuyLimitOrder,SellLimitOrder>;
-
-    using ClientOrderList = std::vector<ClientOrder>;
-
-    ClientOrderList client_orders{buy_order};
+    ob.generate_orders(10.0,10.25,4);
 
 
-    for (int i{}; i < 100; ++i)
-    {
-        client_orders.emplace_back(BuyLimitOrder(1,1,199-i,Duration::DAY));
-        client_orders.emplace_back(SellLimitOrder(1,1,200+i,Duration::DAY));
+    ob.SubmitOrder(std::move(BuyStopOrder(11,10.50,Duration::DAY)));
 
-    }
+    ob.SubmitOrder(std::move(BuyMarketOrder(121)));
 
-    ID search_id{};
-    std::visit([&](auto& o){search_id=o.id();},client_orders[15]);
+    ob.print_all_orders();
 
-    auto lower = std::lower_bound(client_orders.begin(),client_orders.end(),search_id,[](ClientOrder& order, ID id)
-    {
-        ID oid{};
-        std::visit([&](auto& o){oid = o.id();},order);
-        return oid < id;
-    });
-
-    std::cout <<"Search ID: " <<search_id << " Returned ID: " <<std::endl;
-    std::visit([&](auto& o) {o.print();}, client_orders[std::distance(client_orders.begin(),lower)]);
-
-
-
-
-
-    /*std::visit([&](auto& o){search_id = o.id();},client_orders[15].second);
-
-    auto lb = std::lower_bound(client_orders.begin(),client_orders.end(),search_id,[](const std::pair<ID,ClientOrder>& order, double value)
-            {
-                ID oid{};
-
-                std::visit([&](auto& o) { oid = o.id();}, order.second);
-                return oid < value;
-            });
-
-    std::cout <<"Search ID" <<search_id << " Returned ID: "<< lb->first <<std::endl;;*/
-
-    /*for (auto& order : client_orders)
-    {
-        //std::visit([&](auto& o) {o.print();}, order);
-        std::visit([&](auto& o) {std::cout << o.id() <<std::endl;}, order);
-    }*/
-
+    std::deque<QueuedLimitOrder>& level = ob.price_ladder_.ask().limit_orders_;
 
 
 }
-
-/*,
-                    BuyMarketOrder,SellMarketOrder,
-                    BuyStopOrder,SellStopOrder*/

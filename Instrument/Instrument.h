@@ -19,15 +19,16 @@ private:
     double min_price_{1};
     double price_increment_{0.25};
 
-    double bid_{};
-    double ask_{};
+    double bid_{10.75};
+    double ask_{11.0};
 
-    ClientOrderLog client_order_list_;
+
 
 
     const std::chrono::year_month_day contract_expiry_;
 
 public:
+    ClientOrderList client_order_list_;
 
     Instrument()
         : contract_expiry_(std::chrono::December / std::chrono::day(15)/ std::chrono::year(2025)) {}

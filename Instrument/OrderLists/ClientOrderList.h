@@ -7,28 +7,20 @@
 
 #include <variant>
 #include <vector>
+#include "ClientOrders/ClientOrders.h"
 
-#include "../../OrderTypes/ClientOrders/LimitOrders.h"
-#include "../../OrderTypes/ClientOrders/StopOrders.h"
-#include "../../OrderTypes/ClientOrders/MarketOrders.h"
 
-/*template <typename Order>
-concept HasPrice = requires(Order order) {order.price();};*/
 
-template <typename Ord>
-concept HasPrice = requires (Ord order) {order.price();};
 
-class ClientOrderLog {
+class ClientOrderList {
 
     public:
     using ClientOrder = std::variant<   BuyLimitOrder,SellLimitOrder,
                                         BuyStopOrder,SellStopOrder,
                                         BuyMarketOrder,SellMarketOrder>;
 
-//djsjdjds
+
     std::vector<ClientOrder> orders;
-
-
 
 
     void append_order(ClientOrder order){orders.push_back(order);}
@@ -47,20 +39,27 @@ class ClientOrderLog {
     }
 
 
+    void update_state(ID id, OrderState state)
+    {
+        std::visit([&](auto& o){o.update_state(state);},orders[find_by_id(id)]);
+    }
 
     double get_price(ID id)
     {
         double price{};
-        ClientOrder ord = orders[find_by_id(id)];
-        
 
-        std::visit([&](HasPrice<decltype(ord)> auto& o){price=o.price();},orders[find_by_id(id)]);
+        std::visit([&](auto& o){price=o.price();},orders[find_by_id(id)]);
         return price;
     }
 
-    ClientOrder get_order_id(ID id)
+    ClientOrder get_order(ID id)
     {
         return orders[find_by_id(id)];
+    }
+
+    void print_order(ID id)
+    {
+        std::visit([&](auto& o){o.print();},orders[find_by_id(id)]);
     }
 };
 

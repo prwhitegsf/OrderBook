@@ -28,5 +28,6 @@ target_include_directories(odb PUBLIC "${PROJECT_BINARY_DIR}"
 )
 
 
+#[[
 find_package(GTest CONFIG REQUIRED)
-target_link_libraries(odb PUBLIC GTest::gtest GTest::gtest_main)
+target_link_libraries(odb PUBLIC GTest::gtest GTest::gtest_main)]]
