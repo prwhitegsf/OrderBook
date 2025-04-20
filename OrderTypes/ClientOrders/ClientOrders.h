@@ -7,9 +7,12 @@
 
 
 
-class ClientOrders {
+#include "LimitOrders.h"
+#include "StopOrders.h"
+#include "MarketOrders.h"
+#include "CancelOrders.h"
 
-};
+
 
 
 
