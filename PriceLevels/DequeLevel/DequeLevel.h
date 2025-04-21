@@ -9,7 +9,7 @@ class DequeLevel
 {
 public:
     std::deque<QueuedLimitOrder> limit_orders_;
-    std::vector<QueuedMarketOrder> stop_orders_;
+    std::deque<QueuedMarketOrder> stop_orders_;
     int depth_{};
 
 
@@ -55,6 +55,27 @@ public:
         limit_orders_.pop_front();
         return id;
     }
+
+    std::deque<QueuedLimitOrder>::iterator find_order(ID id)
+    {
+        return std::lower_bound(limit_orders_.begin(),limit_orders_.end(),id,
+            [&](const QueuedLimitOrder& order, const ID id_){return order.id_< id_;});
+    }
+
+
+    QueuedLimitOrder get_order(ID id)
+    {
+        return *find_order(id);
+    }
+
+    QueuedLimitOrder remove_order(ID id)
+    {
+        std::deque<QueuedLimitOrder>::iterator ord = find_order(id);
+        QueuedLimitOrder cancelled = *ord;
+        limit_orders_.erase(ord);
+        return cancelled;
+    }
+
 
 
 };

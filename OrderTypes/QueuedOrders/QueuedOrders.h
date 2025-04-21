@@ -17,25 +17,32 @@ struct QueuedLimitOrder {
 
     QueuedLimitOrder(ID id, int qty, int display)
         : id_(id),qty_(qty),display_(display){}
+
+    void reset()
+    {
+        id_ = 0;
+        qty_ = 0;
+        display_ = 0;
+    }
 };
 
 
 struct QueuedMarketOrder {
     ID id_;
     int qty_;
-    double avg_fill_price_;
+    double price_;
 
     QueuedMarketOrder()
-        : id_(0),qty_(0),avg_fill_price_(0){}
+        : id_(0),qty_(0),price_(0){}
 
     QueuedMarketOrder(ID id, int qty)
-        : id_(id),qty_(qty),avg_fill_price_(0){}
+        : id_(id),qty_(qty),price_(0){}
 
     void reset()
     {
         id_ = 0;
         qty_ = 0;
-        avg_fill_price_ = 0;
+        price_ = 0;
     }
 };
 

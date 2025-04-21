@@ -13,8 +13,8 @@ public:
     double price_increment_;
     size_t num_prices_;
 
-    using UpdatedOrders = std::variant<QueuedMarketOrder,QueuedLimitOrder>;
-    std::vector<UpdatedOrders> order_updates_;
+    using UpdatedOrders = std::variant<QueuedMarketOrder,QueuedLimitOrder,CancelOrder>;
+    std::vector<OrderUpdate> order_updates_;
     std::vector<QueuedMarketOrder> pending_market_orders_;
 
     std::vector<Level> levels_;
@@ -59,6 +59,13 @@ public:
         return (static_cast<double>(index) * price_increment_) + min_price_;
     }
 
+    double bid_price() const {return price_from_idx(bid_idx_);}
+    double ask_price() const {return price_from_idx(ask_idx_);}
+
+    void clear_order_updates()
+    {
+        order_updates_.clear();
+    }
 
 };
 

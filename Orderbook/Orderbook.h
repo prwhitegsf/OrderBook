@@ -13,9 +13,7 @@ class Orderbook
 public:
 
 
-
-    std::vector<QueuedMarketOrder> filled_market_orders_;
-    std::vector<CancelOrders> eod_cancel_orders_;
+    std::vector<CancelOrder> eod_cancel_orders_;
 
     std::shared_ptr<Instrument> instrument_;
 
@@ -31,21 +29,22 @@ public:
 
     template <typename Order>
     requires std::is_base_of_v<ClientOrderTag,Order>
-    void SubmitOrder(Order&& order)
+    OrderUpdate SubmitOrder(Order&& order)
     {
         instrument_->client_order_list_.append_order(order);
-        matcher_.match(std::forward<Order>(order),price_ladder_);
+        auto&& update = matcher_.match(std::forward<Order>(order),price_ladder_);
         // here we should push updates to instrument
+        // bid ask
+        instrument_->update_bid(price_ladder_.bid_price());
+        instrument_->update_ask(price_ladder_.ask_price());
+        instrument_->update_client_orders(price_ladder_.order_updates_);
 
+        price_ladder_.clear_order_updates();
+
+
+        return update;
     }
 
-    /*[[nodiscard]] size_t get_index_from_price(double const price) const {
-        return static_cast<size_t>((price - min_price_)/(price_increment_));
-    }
-
-    [[nodiscard]] double price_from_idx(size_t const index) const {
-        return (static_cast<double>(index) * price_increment_) + min_price_;
-    }*/
 
     void print_dom()
     {
@@ -92,10 +91,6 @@ public:
         }
     }
 
-
-
-
-
     void generate_orders(const double starting_bid, const double starting_ask, const int levels_to_fill)
     {
         price_ladder_.bid_idx_ = price_ladder_.idx_from_price(starting_bid);
@@ -122,6 +117,40 @@ public:
 
             depth -= 10;
 
+        }
+    }
+
+    void generate_orders(const double starting_bid, const double starting_ask, std::vector<int> depths)
+    {
+        price_ladder_.bid_idx_ = price_ladder_.idx_from_price(starting_bid);
+        price_ladder_.ask_idx_ =  price_ladder_.idx_from_price(starting_ask);
+
+
+        size_t i{price_ladder_.bid_idx_};
+        for (int depth : depths)
+        {
+            int j{depth};
+            while (j > 0)
+            {
+                SubmitOrder(BuyLimitOrder(1, 1, price_ladder_.price_from_idx(i), Duration::DAY));
+                --j;
+            }
+
+            --i;
+        }
+
+
+        i = price_ladder_.ask_idx_;
+        for (int depth : depths)
+        {
+            int j{depth};
+            while (j > 0)
+            {
+                SubmitOrder(SellLimitOrder(1, 1, price_ladder_.price_from_idx(i), Duration::DAY));
+                --j;
+            }
+
+            ++i;
         }
     }
 };

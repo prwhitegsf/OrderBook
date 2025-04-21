@@ -53,10 +53,12 @@ public:
     int qty() const{return order_.qty_;}
     int& qty() {return order_.qty_;}
     double price() const{return order_.price_;}
+    double& price() {return order_.price_;}
     double fill_price() const{return order_.avg_fill_price_;}
     double& fill_price() {return order_.avg_fill_price_;}
     Duration good_until() const{return order_.good_until_;}
     OrderState state() const{return order_.order_state_;}
+    OrderState& state() {return order_.order_state_;}
     long order_expiration() const{return order_.order_expiration_;}
 
 
@@ -93,21 +95,21 @@ public:
             order_expiration){}
 
 
-    // getters
+    // just ditch this and make order public
     ID id() const{return order_.id_;}
     int qty() const{return order_.qty_;}
     int& qty() {return order_.qty_;}
     double price() const{return order_.price_;}
+    double& price() {return order_.price_;}
     double fill_price() const{return order_.avg_fill_price_;}
     double& fill_price() {return order_.avg_fill_price_;}
     Duration good_until() const{return order_.good_until_;}
     OrderState state() const{return order_.order_state_;}
+    OrderState& state() {return order_.order_state_;}
     long order_expiration() const{return order_.order_expiration_;}
 
 
-    //void update_qty(int qty){order_.qty_ = qty;}
-    void update_state(OrderState order_state){order_.order_state_ = order_state;}
-    //void update_fill_price(double price){order_.avg_fill_price_ = price;}
+
 
     QueuedMarketOrder make_stop_order()
     {

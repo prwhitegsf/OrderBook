@@ -73,6 +73,11 @@ public:
     {
         ask_ = price;
     }
+
+    void update_client_orders(auto&& order_updates)
+    {
+        client_order_list_.update_order_list(std::forward<decltype(order_updates)>(order_updates));
+    }
 };
 
 

@@ -17,7 +17,8 @@ class ClientOrderList {
     public:
     using ClientOrder = std::variant<   BuyLimitOrder,SellLimitOrder,
                                         BuyStopOrder,SellStopOrder,
-                                        BuyMarketOrder,SellMarketOrder>;
+                                        BuyMarketOrder,SellMarketOrder,
+                                        CancelOrder>;
 
 
     std::vector<ClientOrder> orders;
@@ -35,14 +36,14 @@ class ClientOrderList {
                        std::visit([&](auto& o){oid = o.id();},order);
                        return oid < id_;
                    });
+
         return std::distance(orders.begin(),lower);
+
+
     }
 
 
-    void update_state(ID id, OrderState state)
-    {
-        std::visit([&](auto& o){o.update_state(state);},orders[find_by_id(id)]);
-    }
+
 
     double get_price(ID id)
     {
@@ -60,6 +61,26 @@ class ClientOrderList {
     void print_order(ID id)
     {
         std::visit([&](auto& o){o.print();},orders[find_by_id(id)]);
+    }
+
+    void update_order_list(auto&& order_updates)
+    {
+        std::cout << "order update size: "<< order_updates.size() << std::endl;
+        /*for (auto& order : order_updates)
+            std::cout << "Price: " << order.price_ << std::endl;*/
+
+        for (auto& order : order_updates)
+        {
+            std::cout << "Price: " << order.price_ << std::endl;
+            std::visit([&](auto& o)
+            {
+                o.price()=order.price_;
+                o.state()=order.state_;
+                o.qty()=order.qty_;
+
+            },orders[find_by_id(order.id_)]);
+
+        }
     }
 };
 

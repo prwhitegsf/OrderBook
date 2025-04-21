@@ -25,6 +25,7 @@ target_include_directories(odb PUBLIC "${PROJECT_BINARY_DIR}"
         "${PROJECT_SOURCE_DIR}/PriceLevels/DequeLevel"
         "${PROJECT_SOURCE_DIR}/Matchers/FIFO"
         "${PROJECT_SOURCE_DIR}/Instrument/OrderLists"
+        "${PROJECT_SOURCE_DIR}/Printer"
 )
 
 

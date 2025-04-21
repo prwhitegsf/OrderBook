@@ -4,7 +4,7 @@
 //#include "../OrderTypes/ClientOrders/ClientOrders.h"
 #include "../Orderbook/Orderbook.h"
 #include "../PriceLadders/FixedSizeLadder/FixedSizeLadder.h"
-
+#include <ranges>
 
 
 template<typename PriceLadder>
@@ -14,44 +14,51 @@ class Fifo
     public:
         Fifo()=default;
 
-    void match(BuyLimitOrder&& order, PriceLadder& dom)
+    OrderUpdate match(BuyLimitOrder&& order, PriceLadder& dom)
     {
         // Add checks for lifting bid and crossing ask
         //std::cout<< "Buy Limit Triggered"<<std::endl;
         dom.level(dom.idx_from_price(order.price()))
             .append_limit_order(order.make_limit_order());
 
-        // Update State in Client Order List
+        dom.order_updates_.push_back(OrderUpdate(order.id(),order.price(),order.qty(),OrderState::PENDING));
+
+        return dom.order_updates_.back();
 
     }
 
-    void match(SellLimitOrder&& order, PriceLadder& dom)
+    OrderUpdate  match(SellLimitOrder&& order, PriceLadder& dom)
     {
         // Add checks for dropping ask and crossing bid
 
-            dom.level(dom.idx_from_price(order.price()))
-            .append_limit_order(order.make_limit_order());
-
-        //std::cout << "Sell ID: "<< order.id() << std::endl;
-        // Update State in Client Order List
-
-    }
-
-    void match(BuyStopOrder&& order, PriceLadder& dom)
-    {
-
         dom.level(dom.idx_from_price(order.price()))
-        .append_stop_order(order.make_stop_order());
+        .append_limit_order(order.make_limit_order());
+
+        dom.order_updates_.push_back(OrderUpdate(order.id(),order.price(),order.qty(),OrderState::PENDING));
+        return dom.order_updates_.back();
 
     }
 
-    void match(SellStopOrder&& order, PriceLadder& dom)
+     OrderUpdate  match(BuyStopOrder&& order, PriceLadder& dom)
     {
         dom.level(dom.idx_from_price(order.price()))
         .append_stop_order(order.make_stop_order());
+
+        dom.order_updates_.push_back(OrderUpdate(order.id(),order.price(),order.qty(),OrderState::PENDING));
+
+        return dom.order_updates_.back();
     }
 
-    void match(BuyMarketOrder&& market_order, PriceLadder& dom)
+    OrderUpdate  match(SellStopOrder&& order, PriceLadder& dom)
+    {
+        dom.level(dom.idx_from_price(order.price()))
+        .append_stop_order(order.make_stop_order());
+
+        dom.order_updates_.push_back(OrderUpdate(order.id(),order.price(),order.qty(),OrderState::PENDING));
+        return dom.order_updates_.back();
+    }
+
+    OrderUpdate match(BuyMarketOrder&& market_order, PriceLadder& dom)
     {
         buy_market(market_order.make_market_order(), dom);
 
@@ -61,9 +68,11 @@ class Fifo
                 buy_market(ord, dom);
         }
 
+        return {market_order.id(),market_order.price(),market_order.qty(),OrderState::PENDING};
+
     }
 
-    void match(SellMarketOrder&& market_order, PriceLadder& dom)
+    OrderUpdate match(SellMarketOrder&& market_order, PriceLadder& dom)
     {
         sell_market(market_order.make_market_order(), dom);
 
@@ -72,10 +81,20 @@ class Fifo
             if (ord.qty_)
                 sell_market(ord, dom);
         }
+        return {market_order.id(),market_order.price(),market_order.qty(),OrderState::PENDING};
     }
 
-    void match(CancelOrders& order, Orderbook<Fifo,PriceLadder>& ob)
+    OrderUpdate match(CancelOrder&& order, PriceLadder& dom)
     {
+        // cancel requested order and push
+        auto&& [id, price] = order.cancel();
+        auto&& cancelled = dom.level(dom.idx_from_price(price)).remove_order(id);
+        dom.order_updates_.push_back(OrderUpdate(cancelled.id_,price,cancelled.qty_,OrderState::FILLED));
+
+        // push this order which did the canceling
+        dom.order_updates_.push_back(OrderUpdate(order.id(),order.price(),0,OrderState::FILLED));
+
+        return dom.order_updates_.back();
 
     }
 
@@ -83,17 +102,17 @@ class Fifo
 private:
     void buy_market(QueuedMarketOrder market_order, PriceLadder& dom)
     {
-        fill_levels(market_order,dom,dom.ask_idx_,std::plus<size_t>());
+        fill_levels(market_order,dom,dom.ask_idx_,std::plus<>());
 
-        fill_orders_at_level(dom.ask(),market_order,dom);
+        fill_orders_at_level(dom.ask(),market_order,dom, dom.price_from_idx(dom.ask_idx_));
 
     }
 
     void sell_market(QueuedMarketOrder market_order, PriceLadder& dom)
     {
-        fill_levels(market_order,dom,dom.bid_idx_,std::minus<size_t>());
+        fill_levels(market_order,dom,dom.bid_idx_,std::minus<>());
 
-        fill_orders_at_level(dom.bid(),market_order,dom);
+        fill_orders_at_level(dom.bid(),market_order,dom,dom.price_from_idx(dom.bid_idx_));
 
     }
 
@@ -114,14 +133,14 @@ private:
          *  calculation after the loop
          */
 
-        const double initial_qty = market_order.qty_;
+        const double initial_qty = abs(market_order.qty_);
 
-        while (market_order.qty_ >= dom.level(idx).depth()*-1)
+        while (abs(market_order.qty_) >= abs(dom.level(idx).depth()))
         {
-            market_order.avg_fill_price_ += dom.price_from_idx(idx) * dom.level(idx).depth()/initial_qty;
+            market_order.price_ += dom.price_from_idx(idx) * (abs(dom.level(idx).depth())/initial_qty);
             take_all_level_liquidity(market_order,dom.level(idx));
 
-            record_filled_limit_orders(dom.level(idx).limit_orders_, dom.order_updates_);
+            record_filled_orders(dom.level(idx).limit_orders_, dom.order_updates_,dom.price_from_idx(idx));
 
             idx = iterate_idx(idx, 1);
 
@@ -131,32 +150,35 @@ private:
 
         }
 
+        market_order.price_  += dom.price_from_idx(idx) * (abs(market_order.qty_)/initial_qty);
+
         // finish setting fill price
-        if (market_order.avg_fill_price_ == 0)
-            market_order.avg_fill_price_  = dom.price_from_idx(dom.ask_idx_);
+        /*if (market_order.price_ == 0)
+            market_order.price_  = dom.price_from_idx(idx);
         else
-            market_order.avg_fill_price_  += dom.price_from_idx(dom.ask_idx_) * dom.ask().depth()/initial_qty;
+            market_order.price_  += dom.price_from_idx(idx) * (abs(dom.level(idx).depth())/initial_qty);*/
     }
 
 
 
-
-    void fill_orders_at_level(Level& level, QueuedMarketOrder& market_order, PriceLadder& dom)
+// price parameter is temporary, want to move this over to pointer access
+    void fill_orders_at_level(Level& level, QueuedMarketOrder& market_order, PriceLadder& dom,double price)
     {
         level.depth() += market_order.qty_;
-        while (market_order.qty_ >= level.limit_orders_.front().qty_*-1)
+        while (abs(market_order.qty_) >= abs(level.limit_orders_.front().qty_))
         {
-
             market_order.qty_ += level.limit_orders_.front().qty_;
 
-            dom.order_updates_.push_back(level.limit_orders_.front());
+            record_filled_orders(level.limit_orders_.front(),dom.order_updates_,price);
             level.fully_fill_next_order();
         }
 
-        level.limit_orders_.front().qty_ += market_order.qty_;
-        // push partial fill
+        //level.limit_orders_.front().qty_ += market_order.qty_;
+        record_filled_orders(level.limit_orders_.front(), dom.order_updates_,price);
+
         market_order.qty_=0;
-        // push filled market order
+        record_filled_orders(market_order, dom.order_updates_);
+
     }
 
     void take_all_level_liquidity (QueuedMarketOrder& market_order, Level& level)
@@ -167,10 +189,28 @@ private:
 
     }
 
-    void record_filled_limit_orders(auto& orders, auto& update_queue)
+    template<typename R>
+    requires (std::ranges::range<R>)
+    void record_filled_orders(R& orders, auto& update_queue,double price)
     {
-        update_queue.insert(update_queue.end(), orders.begin(), orders.end());
 
+        for (auto& order : orders)
+            update_queue.push_back(OrderUpdate(order.id_,price,order.qty_,OrderState::FILLED));
+
+
+    }
+
+
+    void record_filled_orders(auto& order, auto& update_queue)
+    {
+        update_queue.push_back(OrderUpdate(order.id_,order.price_,order.qty_,OrderState::FILLED));
+    }
+
+    /*template<typename T>
+    requires (!std::ranges::range<T>)*/
+    void record_filled_orders(auto& order, auto& update_queue, double price)
+    {
+        update_queue.push_back(OrderUpdate(order.id_,price,order.qty_,OrderState::FILLED));
     }
 
     void queue_triggered_stops(auto& triggered_stops, auto& market_order_queue)

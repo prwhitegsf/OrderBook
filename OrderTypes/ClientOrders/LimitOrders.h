@@ -60,13 +60,15 @@ public:
     int& qty() {return order_.qty_;}
     int display() const{return order_.display_;}
     double price() const{return order_.price_;}
+    double& price() {return order_.price_;}
     Duration good_until() const{return order_.good_until_;}
     OrderState state() const{return order_.order_state_;}
+    OrderState& state() {return order_.order_state_;}
     long order_expiration() const{return order_.order_expiration_;}
 
 
    // void update_qty(int qty){order_.qty_ = qty;}
-    void update_state(OrderState order_state){order_.order_state_ = order_state;}
+    //void update_state(OrderState order_state){order_.order_state_ = order_state;}
 
     QueuedLimitOrder make_limit_order()
     {
@@ -104,13 +106,15 @@ public:
     int& qty() {return order_.qty_;}
     int display() const{return order_.display_;}
     double price() const{return order_.price_;}
+    double& price() {return order_.price_;}
     Duration good_until() const{return order_.good_until_;}
     OrderState state() const{return order_.order_state_;}
+    OrderState& state() {return order_.order_state_;}
     long order_expiration() const{return order_.order_expiration_;}
 
 
     //void update_qty(int qty){order_.qty_ = qty;}
-    void update_state(OrderState order_state){order_.order_state_ = order_state;}
+    //void update_state(OrderState order_state){order_.order_state_ = order_state;}
 
     QueuedLimitOrder make_limit_order()
     {
