@@ -40,12 +40,12 @@ struct LimitOrder
 
 class BuyLimitOrder : private ClientOrderTag
 {
-private:
-    LimitOrder order_;
-
 public:
+    LimitOrder _;
+
+
     BuyLimitOrder(int qty, int display, double price, Duration good_until, long order_expiration = 0)
-        : order_(
+        : _(
             std::chrono::utc_clock::now().time_since_epoch().count(),
             qty,
             display,
@@ -55,16 +55,16 @@ public:
 
 
     // getters
-    ID id() const{return order_.id_;}
-    int qty() const{return order_.qty_;}
-    int& qty() {return order_.qty_;}
-    int display() const{return order_.display_;}
-    double price() const{return order_.price_;}
-    double& price() {return order_.price_;}
-    Duration good_until() const{return order_.good_until_;}
-    OrderState state() const{return order_.order_state_;}
-    OrderState& state() {return order_.order_state_;}
-    long order_expiration() const{return order_.order_expiration_;}
+    ID id() const{return _.id_;}
+    int qty() const{return _.qty_;}
+    int& qty() {return _.qty_;}
+    int display() const{return _.display_;}
+    double price() const{return _.price_;}
+    double& price() {return _.price_;}
+    Duration good_until() const{return _.good_until_;}
+    OrderState state() const{return _.order_state_;}
+    OrderState& state() {return _.order_state_;}
+    long order_expiration() const{return _.order_expiration_;}
 
 
    // void update_qty(int qty){order_.qty_ = qty;}
@@ -72,26 +72,26 @@ public:
 
     QueuedLimitOrder make_limit_order()
     {
-        return {order_.id_,order_.qty_,order_.display_};
+        return {_.id_,_.qty_,_.display_};
     }
 
     void print()
     {
-        std::cout<< "BuyLimitOrder: "<< order_.id_ << " State: " << OrderStateToString(order_.order_state_) <<std::endl;
-        std::cout << "Price: "<< order_.price_ << " Qty: " << order_.qty_ <<
-                    " Display: "<< order_.display_ << " Duration: " << DurationToString(order_.good_until_)<<
-                    " Expiry: "<<order_.order_expiration_<<std::endl;
+        std::cout<< "BuyLimitOrder: "<< _.id_ << " State: " << OrderStateToString(_.order_state_) <<std::endl;
+        std::cout << "Price: "<< _.price_ << " Qty: " << _.qty_ <<
+                    " Display: "<< _.display_ << " Duration: " << DurationToString(_.good_until_)<<
+                    " Expiry: "<<_.order_expiration_<<std::endl;
     }
 };
 
 class SellLimitOrder : private ClientOrderTag
 {
-private:
-    LimitOrder order_;
-
 public:
+    LimitOrder _;
+
+
     SellLimitOrder(int qty, int display, double price, Duration good_until,long order_expiration = 0)
-        : order_(
+        : _(
             std::chrono::utc_clock::now().time_since_epoch().count(),
             qty*-1,
             display*-1,
@@ -101,16 +101,16 @@ public:
 
 
     // getters
-    ID id() const{return order_.id_;}
-    int qty() const{return order_.qty_;}
-    int& qty() {return order_.qty_;}
-    int display() const{return order_.display_;}
-    double price() const{return order_.price_;}
-    double& price() {return order_.price_;}
-    Duration good_until() const{return order_.good_until_;}
-    OrderState state() const{return order_.order_state_;}
-    OrderState& state() {return order_.order_state_;}
-    long order_expiration() const{return order_.order_expiration_;}
+    ID id() const{return _.id_;}
+    int qty() const{return _.qty_;}
+    int& qty() {return _.qty_;}
+    int display() const{return _.display_;}
+    double price() const{return _.price_;}
+    double& price() {return _.price_;}
+    Duration good_until() const{return _.good_until_;}
+    OrderState state() const{return _.order_state_;}
+    OrderState& state() {return _.order_state_;}
+    long order_expiration() const{return _.order_expiration_;}
 
 
     //void update_qty(int qty){order_.qty_ = qty;}
@@ -118,15 +118,15 @@ public:
 
     QueuedLimitOrder make_limit_order()
     {
-        return {order_.id_,order_.qty_,order_.display_};
+        return {_.id_,_.qty_,_.display_};
     }
 
     void print()
     {
-        std::cout<< "SellLimitOrder: "<< order_.id_ << " State: " << OrderStateToString(order_.order_state_) <<std::endl;
-        std::cout << "Price: "<< order_.price_ << " Qty: " << order_.qty_ <<
-                    " Display: "<< order_.display_ << " Duration: " << DurationToString(order_.good_until_)<<
-                    " Expiry: "<<order_.order_expiration_<<std::endl;
+        std::cout<< "SellLimitOrder: "<< _.id_ << " State: " << OrderStateToString(_.order_state_) <<std::endl;
+        std::cout << "Price: "<< _.price_ << " Qty: " << _.qty_ <<
+                    " Display: "<< _.display_ << " Duration: " << DurationToString(_.good_until_)<<
+                    " Expiry: "<<_.order_expiration_<<std::endl;
     }
 };
 

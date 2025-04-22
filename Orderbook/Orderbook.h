@@ -33,8 +33,7 @@ public:
     {
         instrument_->client_order_list_.append_order(order);
         auto&& update = matcher_.match(std::forward<Order>(order),price_ladder_);
-        // here we should push updates to instrument
-        // bid ask
+
         instrument_->update_bid(price_ladder_.bid_price());
         instrument_->update_ask(price_ladder_.ask_price());
         instrument_->update_client_orders(price_ladder_.order_updates_);

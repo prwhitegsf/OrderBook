@@ -1,7 +1,7 @@
 ### To Do
 
 
-Test Sell Stop basic fcuntionality
+
 
 get rid of all the getters and setters in orders. Just access through members
 

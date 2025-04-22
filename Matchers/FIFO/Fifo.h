@@ -1,9 +1,6 @@
 #ifndef FIFO_H
 #define FIFO_H
 
-//#include "../OrderTypes/ClientOrders/ClientOrders.h"
-#include "../Orderbook/Orderbook.h"
-#include "../PriceLadders/FixedSizeLadder/FixedSizeLadder.h"
 #include <ranges>
 
 
@@ -150,13 +147,10 @@ private:
 
         }
 
-        market_order.price_  += dom.price_from_idx(idx) * (abs(market_order.qty_)/initial_qty);
-
-        // finish setting fill price
-        /*if (market_order.price_ == 0)
+        if (market_order.price_ == 0)
             market_order.price_  = dom.price_from_idx(idx);
         else
-            market_order.price_  += dom.price_from_idx(idx) * (abs(dom.level(idx).depth())/initial_qty);*/
+            market_order.price_  += dom.price_from_idx(idx) * (abs(market_order.qty_)/initial_qty);
     }
 
 

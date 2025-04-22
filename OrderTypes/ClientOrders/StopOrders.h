@@ -35,12 +35,12 @@ struct StopOrder
 
 class BuyStopOrder : private ClientOrderTag
 {
-private:
-    StopOrder order_;
-
 public:
+    StopOrder _;
+
+
     BuyStopOrder(int qty, double price, Duration good_until, long order_expiration = 0)
-        : order_(
+        : _(
             std::chrono::utc_clock::now().time_since_epoch().count(),
             qty,
             price,
@@ -49,45 +49,45 @@ public:
 
 
     // getters
-    ID id() const{return order_.id_;}
-    int qty() const{return order_.qty_;}
-    int& qty() {return order_.qty_;}
-    double price() const{return order_.price_;}
-    double& price() {return order_.price_;}
-    double fill_price() const{return order_.avg_fill_price_;}
-    double& fill_price() {return order_.avg_fill_price_;}
-    Duration good_until() const{return order_.good_until_;}
-    OrderState state() const{return order_.order_state_;}
-    OrderState& state() {return order_.order_state_;}
-    long order_expiration() const{return order_.order_expiration_;}
+    ID id() const{return _.id_;}
+    int qty() const{return _.qty_;}
+    int& qty() {return _.qty_;}
+    double price() const{return _.price_;}
+    double& price() {return _.price_;}
+    double fill_price() const{return _.avg_fill_price_;}
+    double& fill_price() {return _.avg_fill_price_;}
+    Duration good_until() const{return _.good_until_;}
+    OrderState state() const{return _.order_state_;}
+    OrderState& state() {return _.order_state_;}
+    long order_expiration() const{return _.order_expiration_;}
 
 
     //void update_qty(int qty){order_.qty_ = qty;}
-    void update_state(OrderState order_state){order_.order_state_ = order_state;}
+    void update_state(OrderState order_state){_.order_state_ = order_state;}
     //void update_fill_price(double price){order_.avg_fill_price_ = price;}
 
     QueuedMarketOrder make_stop_order()
     {
-        return {order_.id_,order_.qty_};
+        return {_.id_,_.qty_};
     }
 
     void print()
     {
-        std::cout<< "BuyStopOrder: "<< order_.id_ << " State: " << OrderStateToString(order_.order_state_) <<std::endl;
-        std::cout << "Price: "<< order_.price_ << " Qty: " << order_.qty_ <<
-                    " Duration: " << DurationToString(order_.good_until_)<<
-                    " Expiry: "<<order_.order_expiration_<<std::endl;
+        std::cout<< "BuyStopOrder: "<< _.id_ << " State: " << OrderStateToString(_.order_state_) <<std::endl;
+        std::cout << "Price: "<< _.price_ << " Qty: " << _.qty_ <<
+                    " Duration: " << DurationToString(_.good_until_)<<
+                    " Expiry: "<<_.order_expiration_<<std::endl;
     }
 };
 
 class SellStopOrder : private ClientOrderTag
 {
-private:
-    StopOrder order_;
-
 public:
+    StopOrder _;
+
+
     SellStopOrder(int qty, double price, Duration good_until, long order_expiration = 0)
-        : order_(
+        : _(
             std::chrono::utc_clock::now().time_since_epoch().count(),
             qty*-1,
             price,
@@ -96,32 +96,32 @@ public:
 
 
     // just ditch this and make order public
-    ID id() const{return order_.id_;}
-    int qty() const{return order_.qty_;}
-    int& qty() {return order_.qty_;}
-    double price() const{return order_.price_;}
-    double& price() {return order_.price_;}
-    double fill_price() const{return order_.avg_fill_price_;}
-    double& fill_price() {return order_.avg_fill_price_;}
-    Duration good_until() const{return order_.good_until_;}
-    OrderState state() const{return order_.order_state_;}
-    OrderState& state() {return order_.order_state_;}
-    long order_expiration() const{return order_.order_expiration_;}
+    ID id() const{return _.id_;}
+    int qty() const{return _.qty_;}
+    int& qty() {return _.qty_;}
+    double price() const{return _.price_;}
+    double& price() {return _.price_;}
+    double fill_price() const{return _.avg_fill_price_;}
+    double& fill_price() {return _.avg_fill_price_;}
+    Duration good_until() const{return _.good_until_;}
+    OrderState state() const{return _.order_state_;}
+    OrderState& state() {return _.order_state_;}
+    long order_expiration() const{return _.order_expiration_;}
 
 
 
 
     QueuedMarketOrder make_stop_order()
     {
-        return {order_.id_,order_.qty_};
+        return {_.id_,_.qty_};
     }
 
     void print()
     {
-        std::cout<< "SellStopOrder: "<< order_.id_ << " State: " << OrderStateToString(order_.order_state_) <<std::endl;
-        std::cout << "Price: "<< order_.price_ << " Qty: " << order_.qty_ <<
-                    " Duration: " << DurationToString(order_.good_until_)<<
-                    " Expiry: "<<order_.order_expiration_<<std::endl;
+        std::cout<< "SellStopOrder: "<< _.id_ << " State: " << OrderStateToString(_.order_state_) <<std::endl;
+        std::cout << "Price: "<< _.price_ << " Qty: " << _.qty_ <<
+                    " Duration: " << DurationToString(_.good_until_)<<
+                    " Expiry: "<<_.order_expiration_<<std::endl;
     }
 };
 

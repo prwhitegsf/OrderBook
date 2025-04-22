@@ -49,8 +49,8 @@ int main()
     ob.print_all_orders();
     */
 
-    //FixedSizeLadder& dom = ob.price_ladder_;
+    FixedSizeLadder& dom = ob.price_ladder_;
 
-    //print(dom.level(dom.idx_from_price(9.25)).limit_orders_, "Limit Orders: ");
+    print(dom.level(dom.idx_from_price(9.25)).limit_orders_, "Limit Orders: ");
 
 }
