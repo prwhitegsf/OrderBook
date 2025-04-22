@@ -10,7 +10,7 @@
 #include <ranges>
 #include <vector>
 
-#include "../OrderTypes/ClientOrders/OrderQualifiers.h"
+#include "../OrderTypes/Orders.h"
 
 
 template<typename T>
@@ -62,8 +62,8 @@ struct Print {
 
     void operator() (OrderUpdate& item, std::string const& mess="") const
     {
-        std::cout<< "ID: " << item.id_ <<"   State: "<< OrderStateToString(item.state_)<<std::endl;
-        std::cout<<" price: " << item.price_ << " qty: "<< item.qty_ << std::endl;
+        std::cout<< "ID: " << item._.id_ <<"   State: "<< OrderStateToString(item.state_)<<std::endl;
+        std::cout<<" price: " << item._.price_ << " qty: "<< item._.qty_ << std::endl;
     }
 
 

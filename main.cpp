@@ -3,54 +3,65 @@
 #include <algorithm>
 
 #include "Printer.h"
-#include "OrderTypes/ClientOrders/ClientOrders.h"
+#include "OrderTypes/SubmittedOrderTypes.h"
+#include "OrderQueue/OrderQueue.h"
 #include "PriceLadders/FixedSizeLadder/FixedSizeLadder.h"
 #include "Orderbook/Orderbook.h"
-#include "Matchers/FIFO/Fifo.h"
+#include "Matchers/FIFO/FifoMatchingStrategy.h"
 #include "Instrument/Instrument.h"
+
+using Ladder = FixedSizeLadder;
+using Fifo = FifoMatchingStrategy<Ladder>;
+using Q = OrderQueue<Orderbook<Fifo,Ladder>>;
+
+
+template<typename T>
+OrderUpdate CreateOrder(T submitted_order,Orderbook<Fifo, Ladder>& ob)
+{
+    ob.instrument_->client_order_list_.append_order(submitted_order);
+    return ob.SubmitOrder(submitted_order.make_queued_order());
+}
+
 
 int main()
 {
     Print print;
+
+
+
     auto instrument = std::make_shared<Instrument>();
-    Fifo<FixedSizeLadder> fifo;
-    Orderbook<Fifo<FixedSizeLadder>,FixedSizeLadder> ob(instrument,FixedSizeLadder(instrument),fifo);
 
-
-    ob.generate_orders(10.00,10.25,{2,2,5,3});
-    print(instrument->bid(),"Bid: ");
-    print(instrument->ask(),"Ask: ");
-
-    ob.print_all_orders();
+    Fifo fifo;
+    Orderbook<Fifo,Ladder> ob(instrument,Ladder(instrument),fifo);
+    Q q{};
 
     std::cout<<"---------------------"<<std::endl;
 
-    /*OrderUpdate lm = ob.SubmitOrder(BuyLimitOrder(4,4,9.25,Duration::DAY));
-    //print(lm, "New Limit Order: ");
-
-    instrument->client_order_list_.print_order(lm.id_);
+    //OrderQueue<Orderbook<FifoMatchingStrategy<FixedSizeLadder>,FixedSizeLadder>> q{};
+    q.generate_orders(10,11,{5,4,3,2},ob);
+    q.SubmitAll(ob);
     ob.print_all_orders();
 
-    OrderUpdate co = ob.SubmitOrder(CancelOrder(lm.id_,lm.price_));
-    instrument->client_order_list_.print_order(lm.id_);*/
-
-    ob.SubmitOrder(SellStopOrder(4,9.75,Duration::DAY));
-    ob.print_all_orders();
-
-    OrderUpdate sell = ob.SubmitOrder(SellMarketOrder(3));
-
-    print(sell, "Sell Order:");
-    ob.print_all_orders();
-
-    /*
+    std::cout<<"---------------------"<<std::endl;
     print(instrument->bid(),"Bid: ");
     print(instrument->ask(),"Ask: ");
 
+    std::cout<<"---------------------"<<std::endl;
+
+    OrderUpdate sell_limit = CreateOrder(SubmittedSellLimit(20,10,Duration::DAY),ob);
+    print(sell_limit);
     ob.print_all_orders();
-    */
 
-    FixedSizeLadder& dom = ob.price_ladder_;
+    std::cout<<"---------------------"<<std::endl;
+    print(instrument->bid(),"Bid: ");
+    print(instrument->ask(),"Ask: ");
 
-    print(dom.level(dom.idx_from_price(9.25)).limit_orders_, "Limit Orders: ");
+    OrderUpdate buy_limit = CreateOrder(SubmittedBuyLimit(21,11,Duration::DAY),ob);
+    print(buy_limit);
+    ob.print_all_orders();
+
+
+
+
 
 }

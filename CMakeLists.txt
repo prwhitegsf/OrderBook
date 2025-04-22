@@ -14,8 +14,7 @@ add_subdirectory(PriceLadders/FixedSizeLadder)
 add_subdirectory(PriceLevels/DequeLevel)
 ]]
 
-add_subdirectory(OrderTypes)
-target_link_libraries(odb PUBLIC OrderTypes)
+
 
 target_include_directories(odb PUBLIC "${PROJECT_BINARY_DIR}"
         "${PROJECT_SOURCE_DIR}/Instrument"

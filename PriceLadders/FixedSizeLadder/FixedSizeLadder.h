@@ -13,30 +13,29 @@ public:
     double price_increment_;
     size_t num_prices_;
 
-    using UpdatedOrders = std::variant<QueuedMarketOrder,QueuedLimitOrder,CancelOrder>;
     std::vector<OrderUpdate> order_updates_;
-    std::vector<QueuedMarketOrder> pending_market_orders_;
+
 
     std::vector<Level> levels_;
 
     size_t bid_idx_;
     size_t ask_idx_;
 
+    Level& ask()
+    {
+
+        return levels_[ask_idx_];
+    }
 
     Level& bid()
     {
+
         return levels_[bid_idx_];
-    }
-
-
-    Level& ask()
-    {
-        return levels_[ask_idx_];
     }
 
     Level& level(size_t idx)
     {
-        //std::cout<< "Get Level "<< idx<<std::endl;
+
         return levels_[idx];
     }
 
@@ -64,7 +63,7 @@ public:
 
     void clear_order_updates()
     {
-        order_updates_.clear();
+       // order_updates_.clear();
     }
 
 };
