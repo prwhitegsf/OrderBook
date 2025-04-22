@@ -25,20 +25,22 @@ int main()
 
     std::cout<<"---------------------"<<std::endl;
 
-    OrderUpdate lm = ob.SubmitOrder(BuyLimitOrder(4,4,9.25,Duration::DAY));
+    /*OrderUpdate lm = ob.SubmitOrder(BuyLimitOrder(4,4,9.25,Duration::DAY));
     //print(lm, "New Limit Order: ");
 
     instrument->client_order_list_.print_order(lm.id_);
     ob.print_all_orders();
 
     OrderUpdate co = ob.SubmitOrder(CancelOrder(lm.id_,lm.price_));
-    instrument->client_order_list_.print_order(lm.id_);
+    instrument->client_order_list_.print_order(lm.id_);*/
+
+    ob.SubmitOrder(SellStopOrder(4,9.75,Duration::DAY));
     ob.print_all_orders();
-    //ob.SubmitOrder(BuyStopOrder(11,10.50,Duration::DAY));
-   //OrderUpdate buy = ob.SubmitOrder(BuyMarketOrder(3));
 
-    //print(buy, "Buy Order:");
+    OrderUpdate sell = ob.SubmitOrder(SellMarketOrder(3));
 
+    print(sell, "Sell Order:");
+    ob.print_all_orders();
 
     /*
     print(instrument->bid(),"Bid: ");

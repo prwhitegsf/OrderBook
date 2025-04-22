@@ -1,10 +1,14 @@
 ### To Do
 
 
-Test Sell Market, Sell Stop, Cancel
+Test Sell Stop basic fcuntionality
+
+get rid of all the getters and setters in orders. Just access through members
 
 
 Add checks and processing for when resting orders cross the bid/ask
+
+
 
 eod orders
 
