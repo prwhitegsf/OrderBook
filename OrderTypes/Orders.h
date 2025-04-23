@@ -8,17 +8,21 @@
 #include "Qualifiers.h"
 
 using ID = unsigned long;
+using Qty = unsigned short int;
+using PriceIdx = unsigned short int;
+
+struct Order {
+
+    ID id_;
+    Qty qty_;
+    Qty total_;
+    PriceIdx price_;
+    float fill_price_{};
+    OrderState state_;
 
 
-
-struct Order
-{
-  ID id_;
-  int qty_;
-  double price_;
-
-  Order(ID id, int qty, double price)
-    : id_(id), qty_(qty), price_(price){}
+    Order(ID id, Qty qty, Qty total, PriceIdx price, OrderState state)
+    : id_(id), qty_(qty),total_(total) ,price_(price),state_(state){}
 
 };
 
@@ -64,14 +68,13 @@ struct Cancel : private QueuedOrderTag
 struct OrderUpdate {
 
     Order order;
-
-    OrderState state_;
     long update_ts{};
 
     OrderUpdate()
-        : order({0,0, 0}),state_(OrderState::SUBMITTED) {}
-    OrderUpdate(ID id,double price,int qty,OrderState state)
-        : order({id, qty, price}),state_(state) {}
+        : order({0,0,0,0,OrderState::SUBMITTED}) {}
+
+    OrderUpdate(ID id,Qty qty, Qty total, PriceIdx price,OrderState state)
+        : order({id, qty, total, price, state}){}
 
 };
 

@@ -2,53 +2,58 @@
 #define FIFO_H
 
 #include <ranges>
+#include "../../OrderTypes/Orders.h"
 #include "../../PriceLevels/DequeLevel/DequeLevel.h"
-using Level = DequeLevel;
+using Level = DequeLevel<Order>;
+using Dom = std::vector<Level>;
 using DomIter = std::vector<Level>::iterator;
 
 class FifoMatchingStrategy
 {
 
-public:
+
     static constexpr short UP{1};
     static constexpr short DOWN{-1};
 
 
     size_t num_prices_;
 
-    std::vector<Level> levels_;
+    Dom dom_;
 
-    DomIter bid_{ levels_.begin() };
-    DomIter ask_{ levels_.end() };
+    DomIter bid_{ dom_.begin() };
+    DomIter ask_{ dom_.end() };
+    DomIter level_{ dom_.begin() };
 
-    DomIter level_{ levels_.begin() };
-
+public:
 
     std::vector<OrderUpdate> order_updates_;
-    size_t ask_idx(){return std::distance(levels_.begin(), ask_);};
-    size_t bid_idx(){return std::distance(levels_.begin(), bid_);};
-    size_t lev_idx(){return std::distance(levels_.begin(), level_);};
-    size_t idx(const DomIter ptr){return std::distance(levels_.begin(), ptr);};
+    size_t ask_idx(){return std::distance(dom_.begin(), ask_);};
+    size_t bid_idx(){return std::distance(dom_.begin(), bid_);};
+
+    size_t idx(const DomIter ptr){return std::distance(dom_.begin(), ptr);};
     size_t num_prices() const {return num_prices_;};
 
-    DomIter ladder_first() {return levels_.begin();};
-    DomIter ladder_last() {return levels_.end();};
+    DomIter dom_begin() {return dom_.begin();};
+    DomIter dom_end() {return dom_.end();};
 
     void set_bid(const DomIter ptr){bid_ = ptr;};
     void set_ask(const DomIter ptr){ask_ = ptr;};
 
-    friend void print_all_orders(FifoMatchingStrategy& fifo);
+    Level& get_level(size_t idx){ return dom_[idx];};
+
+    const Dom& get_dom() {return dom_;};
+
 
     FifoMatchingStrategy()=default;
 
     explicit FifoMatchingStrategy(const size_t num_prices)
-        : num_prices_(num_prices),levels_(num_prices){}
+        : num_prices_(num_prices),dom_(num_prices){}
 
 
 
     OrderUpdate match(BuyLimit&& o)
     {
-        level_ = levels_.begin()+o.order.price_;
+        level_ = dom_.begin()+o.order.price_;
         if (level_ < ask_) // Not crossing the spread
         {
             if (level_ > bid_) // lifting the bid
@@ -66,7 +71,7 @@ public:
 
     OrderUpdate match(SellLimit&& o)
     {
-        level_ = levels_.begin()+o.order.price_;
+        level_ = dom_.begin()+o.order.price_;
         if (level_ > bid_)
         {
             if (level_ < ask_)
@@ -111,7 +116,7 @@ public:
             taker->append_limit_order(o);
 
 
-        order_updates_.push_back(OrderUpdate(o.id_,o.price_,o.qty_,OrderState::PARTIALLY_FILLED));
+        order_updates_.push_back(OrderUpdate(o.id_,o.qty_,o.total_,o.price_,OrderState::PARTIALLY_FILLED));
 
         return order_updates_.back();
 
@@ -132,15 +137,15 @@ public:
 
     OrderUpdate match(Cancel&& o)
     {
-        level_ = levels_.begin() + o.order.price_;
+        level_ = dom_.begin() + o.order.price_;
 
         auto&& cancelled = level_->remove_order(o.cancel_id_);
 
-        order_updates_.push_back(OrderUpdate(cancelled.id_,o.order.price_,cancelled.qty_,OrderState::FILLED));
+        order_updates_.push_back(OrderUpdate(cancelled.id_,cancelled.qty_,cancelled.qty_,o.order.price_,OrderState::CANCELLED));
 
-        order_updates_.push_back(OrderUpdate(o.order.id_,o.order.price_,0,OrderState::FILLED));
+        order_updates_.push_back(OrderUpdate(o.order.id_,0,0,o.order.price_,OrderState::FILLED));
 
-        return {0,0,0,OrderState::FILLED};
+        return  order_updates_.back();
 
     }
 
@@ -190,20 +195,20 @@ public:
 
     OrderUpdate& record_order_update(const Order& o, OrderState state)
     {
-        order_updates_.emplace_back(OrderUpdate(o.id_,o.price_,o.qty_,state));
+        order_updates_.emplace_back(OrderUpdate(o.id_,o.qty_,o.qty_,o.price_,state));
         return order_updates_.back();
     }
 
     OrderUpdate& record_fills(const Order& o)
     {
-        order_updates_.emplace_back(OrderUpdate(o.id_,o.price_,o.qty_,OrderState::FILLED));
+        order_updates_.emplace_back(OrderUpdate(o.id_,o.qty_,o.qty_,o.price_,OrderState::FILLED));
         return order_updates_.back();
     }
 
     void record_fills(const DomIter& level)
     {
-        for (const auto& order : level->limit_orders_)
-            order_updates_.push_back(OrderUpdate(order.id_,order.price_,order.qty_,OrderState::FILLED));
+        for (const auto& o : level->limit_orders_)
+            order_updates_.push_back(OrderUpdate(o.id_,o.qty_,o.qty_,o.price_,OrderState::FILLED));
     }
 
 

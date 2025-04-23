@@ -3,22 +3,17 @@
 
 #include <variant>
 #include <memory>
-#include "../OrderTypes/Orders.h"
+//#include "../OrderTypes/Orders.h"
 #include "../Instrument/Instrument.h"
 
 template <typename Matcher>
 class Orderbook
 {
+    Matcher matcher_;
 
 public:
 
     std::shared_ptr<Instrument> instrument_;
-
-
-
-    Matcher matcher_;
-
-
     explicit Orderbook(std::shared_ptr<Instrument> instrument, Matcher matcher)
         : instrument_(instrument),
         matcher_(matcher){}
@@ -37,43 +32,16 @@ public:
         return update;
     }
 
+    void set_bid(size_t idx){ matcher_.set_bid(matcher_.dom_begin()+idx); }
+    void set_ask(size_t idx){ matcher_.set_ask(matcher_.dom_begin()+idx); }
 
 
+    const auto& get_dom(){ return matcher_.get_dom(); }
 
-    void print_all_orders(Matcher matcher)
-    {
-        std::cout << std::format("{:7}","   Price");
-        std::cout << std::format("{:7}","   Depth")<<std::endl;
+    size_t num_prices() {return matcher_.num_prices();}
 
-        matcher_.level_ = matcher_.levels_.end()-1;
-        while (matcher_.level_ != matcher_.levels_.begin()-1)
-        {
-
-            if ((matcher_.level_+1) == matcher_.ask_)
-                std::cout << "......................"<<std::endl;
-
-            if(matcher_.level_->depth_ != 0)
-            {
-                std::cout << std::format("{:7}", std::distance(matcher_.levels_.begin(),matcher_.level_));//,matcher_.get_level(i-1).depth());
-                std::cout << std::format("{:7}",matcher_.level_->depth_);
-                for (auto const& order : matcher_.level_->limit_orders_)
-                {
-                    std::cout << std::format("{:4}", order.qty_);
-                }
-
-
-
-               std::cout <<std::endl;
-            }
-
-            --matcher_.level_;
-
-        }
-    }
-
-
-
-
+    size_t bid_idx()  {return matcher_.bid_idx();}
+    size_t ask_idx()  {return matcher_.ask_idx();}
 };
 
 

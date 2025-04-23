@@ -8,7 +8,7 @@
 #include <string>
 
 using ID = unsigned long;
-enum class OrderState
+enum class OrderState : short
 {
 
     SUBMITTED,
@@ -16,7 +16,8 @@ enum class OrderState
     REJECTED,
     PENDING,
     PARTIALLY_FILLED,
-    FILLED
+    FILLED,
+    CANCELLED
 
 
 };
@@ -38,6 +39,8 @@ inline std::string OrderStateToString(OrderState state)
         return "PARTIALLY_FILLED";
     case OrderState::FILLED:
         return "FILLED";
+    case OrderState::CANCELLED:
+        return "CANCELLED";
     default:
         return "UNKNOWN";
     }

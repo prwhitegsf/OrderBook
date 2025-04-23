@@ -7,7 +7,6 @@
 
 #include <variant>
 #include <vector>
-#include "../../OrderTypes/Orders.h"
 
 
 
@@ -23,8 +22,11 @@ class ClientOrderList {
 
     std::vector<ClientOrder> orders;
 
+    void append_order(ClientOrder order)
+    {
 
-    void append_order(ClientOrder order){orders.push_back(order);}
+        orders.push_back(order);
+    }
 
     size_t find_by_id(ID id)
     {
@@ -38,7 +40,6 @@ class ClientOrderList {
                    });
 
         return std::distance(orders.begin(),lower);
-
 
     }
 
@@ -65,36 +66,17 @@ class ClientOrderList {
 
     void update_order_list(auto& order_updates)
     {
-        //std::cout << "order update size: "<< order_updates.size() << std::endl;
-
 
         for (auto order : order_updates)
         {
-            //std::cout << "Price: " << order._.price_ << std::endl;
-            //std::cout << "Idx: " << find_by_id(order._.id_)<< std::endl;
-            //size_t my_id = find_by_id(order._.id_);
-            //find_by_id(order._.id_);
             std::visit([&](auto& o)
             {
-                //std::cout << "LambdaPrice: " << order._.id_ << std::endl;
                 o.order.price_=order.order.price_;
-                o.state_=order.state_;
+                o.order.state_=order.order.state_;
                 o.order.qty_=order.order.qty_;
 
             },orders[find_by_id(order.order.id_)]);
 
-        }
-    }
-
-    void print_all()
-    {
-        for (auto order : orders)
-        {
-            std::visit([&](auto& o){o.print();},order);
-            std::cout << std::endl;
-
-            std::cout<<"---------------------"<<std::endl;
-            std::cout << std::endl;
         }
     }
 };

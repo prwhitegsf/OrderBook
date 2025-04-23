@@ -8,7 +8,7 @@
 #include <variant>
 #include <deque>
 
-#include "../OrderTypes/Orders.h"
+//#include "../OrderTypes/Orders.h"
 //#include "../Orderbook/Orderbook.h"
 
 using QueueOrder = std::variant<SubmittedBuyLimit,SubmittedSellLimit,SubmittedBuyMarket,SubmittedSellMarket,SubmittedCancel>;
@@ -54,45 +54,7 @@ public:
 
 
 
-    void generate_orders(const double starting_bid, const double starting_ask,
-        const std::vector<int>& depths,OrderBook& ob)
-    {
-        auto& dom = ob.matcher_;
 
-        dom.set_bid(dom.ladder_first()+starting_bid);
-        dom.set_ask(dom.ladder_first()+starting_ask);
-        //dom.bid_ = dom.levels_.begin()+starting_bid;
-        //dom.ask_ = dom.levels_.begin()+starting_ask;
-
-        size_t i = dom.bid_idx();
-        for (const int depth : depths)
-        {
-            int j{depth};
-            while (j > 0)
-            {
-                SubmittedBuyLimit buy(1,i,Duration::DAY);
-                push(buy);
-                ob.instrument_->client_order_list_.append_order(buy);
-                --j;
-            }
-
-            --i;
-        }
-
-        i = dom.ask_idx();
-        for (const int depth : depths)
-        {
-            int j{depth};
-            while (j > 0) {
-                SubmittedSellLimit sell(1,i,Duration::DAY);
-                push(sell);
-                ob.instrument_->client_order_list_.append_order(sell);
-                --j;
-            }
-
-            ++i;
-        }
-    }
 };
 
 
