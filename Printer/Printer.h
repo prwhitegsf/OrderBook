@@ -62,8 +62,8 @@ struct Print {
 
     void operator() (OrderUpdate& item, std::string const& mess="") const
     {
-        std::cout<< "ID: " << item._.id_ <<"   State: "<< OrderStateToString(item.state_)<<std::endl;
-        std::cout<<" price: " << item._.price_ << " qty: "<< item._.qty_ << std::endl;
+        std::cout<< "ID: " << item.order.id_ <<"   State: "<< OrderStateToString(item.state_)<<std::endl;
+        std::cout<<" price: " << item.order.price_ << " qty: "<< item.order.qty_ << std::endl;
     }
 
 

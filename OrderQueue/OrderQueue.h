@@ -24,7 +24,7 @@ public:
     ID front_id()
     {
         ID id{};
-        std::visit([&](auto&& o){id = o._.id_;},q.front());
+        std::visit([&](auto&& o){id = o.order.id_;},q.front());
 
         return id;
     }
@@ -55,16 +55,17 @@ public:
 
 
     void generate_orders(const double starting_bid, const double starting_ask,
-        std::vector<int> depths,OrderBook& ob)
+        const std::vector<int>& depths,OrderBook& ob)
     {
         auto& dom = ob.matcher_;
-        dom.bid_idx_ = starting_bid;
-        dom.ask_idx_ =  starting_ask;
-        dom.bid_ = dom.levels_.begin()+dom.bid_idx_;
-        dom.ask_ = dom.levels_.begin()+dom.ask_idx_;
 
-        size_t i{dom.bid_idx_};
-        for (int depth : depths)
+        dom.set_bid(dom.ladder_first()+starting_bid);
+        dom.set_ask(dom.ladder_first()+starting_ask);
+        //dom.bid_ = dom.levels_.begin()+starting_bid;
+        //dom.ask_ = dom.levels_.begin()+starting_ask;
+
+        size_t i = dom.bid_idx();
+        for (const int depth : depths)
         {
             int j{depth};
             while (j > 0)
@@ -78,8 +79,8 @@ public:
             --i;
         }
 
-        i = dom.ask_idx_;
-        for (int depth : depths)
+        i = dom.ask_idx();
+        for (const int depth : depths)
         {
             int j{depth};
             while (j > 0) {

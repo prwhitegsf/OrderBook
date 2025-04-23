@@ -12,7 +12,7 @@
 
 class SubmittedBuyLimit {
 public:
-    Order _;
+    Order order;
     int total_qty_;
 
     Duration duration_;
@@ -22,24 +22,24 @@ public:
 
 
     SubmittedBuyLimit(int total_qty, int display_qty, double price, Duration duration, long expiry = 0)
-        : _(std::chrono::utc_clock::now().time_since_epoch().count(),display_qty,price),
+        : order(std::chrono::utc_clock::now().time_since_epoch().count(),display_qty,price),
         total_qty_(total_qty),duration_(duration),expiry_(expiry),state_(OrderState::SUBMITTED){}
 
 
     SubmittedBuyLimit(int total_qty, double price, Duration duration, long expiry = 0)
-        : _(std::chrono::utc_clock::now().time_since_epoch().count(),total_qty,price),
+        : order(std::chrono::utc_clock::now().time_since_epoch().count(),total_qty,price),
         total_qty_(total_qty),duration_(duration),expiry_(expiry),state_(OrderState::SUBMITTED){}
 
 
     BuyLimit make_queued_order() const
     {
-        return BuyLimit(_);
+        return BuyLimit(order);
     }
 
     void print() const
     {
-        std::cout<< "BuyLimitOrder: "<< _.id_ << " State: " << OrderStateToString(state_) <<std::endl;
-        std::cout << "Price: "<< _.price_ << "Show Qty: " << _.qty_ <<
+        std::cout<< "BuyLimitOrder: "<< order.id_ << " State: " << OrderStateToString(state_) <<std::endl;
+        std::cout << "Price: "<< order.price_ << "Show Qty: " << order.qty_ <<
                     " Total Qty: "<< total_qty_ << " Duration: " << DurationToString(duration_)<<
                     " Expiry: "<<expiry_<<std::endl;
     }
@@ -47,7 +47,7 @@ public:
 
 class SubmittedSellLimit {
 public:
-    Order _;
+    Order order;
     int total_qty_;
 
     Duration duration_;
@@ -57,24 +57,24 @@ public:
 
 
     SubmittedSellLimit(int total_qty, int display_qty, double price, Duration duration, long expiry = 0)
-        : _(std::chrono::utc_clock::now().time_since_epoch().count(),display_qty,price),
+        : order(std::chrono::utc_clock::now().time_since_epoch().count(),display_qty,price),
         total_qty_(total_qty),duration_(duration),expiry_(expiry),state_(OrderState::SUBMITTED){}
 
 
     SubmittedSellLimit(int total_qty, double price, Duration duration, long expiry = 0)
-        : _(std::chrono::utc_clock::now().time_since_epoch().count(),total_qty,price),
+        : order(std::chrono::utc_clock::now().time_since_epoch().count(),total_qty,price),
         total_qty_(total_qty),duration_(duration),expiry_(expiry),state_(OrderState::SUBMITTED){}
 
 
     SellLimit make_queued_order() const
     {
-        return SellLimit(_);
+        return SellLimit(order);
     }
 
     void print() const
     {
-        std::cout<< "SellLimitOrder: "<< _.id_ << " State: " << OrderStateToString(state_) <<std::endl;
-        std::cout << "Price: "<< _.price_ << "Show Qty: " << _.qty_ <<
+        std::cout<< "SellLimitOrder: "<< order.id_ << " State: " << OrderStateToString(state_) <<std::endl;
+        std::cout << "Price: "<< order.price_ << "Show Qty: " << order.qty_ <<
                     " Total Qty: "<< total_qty_ << " Duration: " << DurationToString(duration_)<<
                     " Expiry: "<<expiry_<<std::endl;
     }
@@ -83,38 +83,38 @@ public:
 class SubmittedBuyMarket {
 public:
 
-    Order _;
+    Order order;
     OrderState state_;
 
     explicit SubmittedBuyMarket(const int qty)
-        : _(std::chrono::utc_clock::now().time_since_epoch().count(),qty,0),
+        : order(std::chrono::utc_clock::now().time_since_epoch().count(),qty,0),
         state_(OrderState::SUBMITTED){}
 
-    BuyMarket make_queued_order() const { return BuyMarket(_); }
+    BuyMarket make_queued_order() const { return BuyMarket(order); }
 
     void print() const
     {
-        std::cout<< "BuyMarketOrder: "<< _.id_ << " State: " << OrderStateToString(state_) <<std::endl;
-        std::cout << "Avg Fill Price: "<< _.price_ << "Show Qty: " << _.qty_ << std::endl;
+        std::cout<< "BuyMarketOrder: "<< order.id_ << " State: " << OrderStateToString(state_) <<std::endl;
+        std::cout << "Avg Fill Price: "<< order.price_ << "Show Qty: " << order.qty_ << std::endl;
     }
 };
 
 class SubmittedSellMarket {
 public:
 
-    Order _;
+    Order order;
     OrderState state_;
 
     explicit SubmittedSellMarket(const int qty)
-        : _(std::chrono::utc_clock::now().time_since_epoch().count(),qty,0),
+        : order(std::chrono::utc_clock::now().time_since_epoch().count(),qty,0),
         state_(OrderState::SUBMITTED){}
 
-    SellMarket make_queued_order() const { return SellMarket(_); }
+    SellMarket make_queued_order() const { return SellMarket(order); }
 
     void print() const
     {
-        std::cout<< "SellMarketOrder: "<< _.id_ << " State: " << OrderStateToString(state_) <<std::endl;
-        std::cout << "Avg Fill Price: "<< _.price_ << "Show Qty: " << _.qty_ << std::endl;
+        std::cout<< "SellMarketOrder: "<< order.id_ << " State: " << OrderStateToString(state_) <<std::endl;
+        std::cout << "Avg Fill Price: "<< order.price_ << "Show Qty: " << order.qty_ << std::endl;
     }
 };
 
@@ -122,20 +122,20 @@ public:
 class SubmittedCancel {
 public:
 
-    Order _;
+    Order order;
     OrderState state_;
     ID cancel_id_;
 
     explicit SubmittedCancel(ID cancel_id, double price)
-        : _(std::chrono::utc_clock::now().time_since_epoch().count(),0,price),
+        : order(std::chrono::utc_clock::now().time_since_epoch().count(),0,price),
         cancel_id_(cancel_id),
         state_(OrderState::SUBMITTED){}
 
-    Cancel make_queued_order() const { return Cancel(_, cancel_id_); }
+    Cancel make_queued_order() const { return Cancel(order, cancel_id_); }
 
     void print() const
     {
-        std::cout<< "Cancel Order ID : "<< _.id_ << " State: " << OrderStateToString(state_) <<std::endl;
+        std::cout<< "Cancel Order ID : "<< order.id_ << " State: " << OrderStateToString(state_) <<std::endl;
         std::cout<< "Order to be cancelled ID : "<< cancel_id_ << std::endl;
     }
 };

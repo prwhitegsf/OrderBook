@@ -29,49 +29,49 @@ struct QueuedOrderTag{};
 
 struct BuyLimit : private QueuedOrderTag
 {
-    Order _;
-    explicit BuyLimit(Order order) : _(order){}
+    Order order;
+    explicit BuyLimit(Order order) : order(order){}
 };
 
 struct SellLimit : private QueuedOrderTag
 {
-    Order _;
-    explicit SellLimit(Order order) : _(order){}
+    Order order;
+    explicit SellLimit(Order order) : order(order){}
 };
 
 struct BuyMarket : private QueuedOrderTag
 {
-    Order _;
-    explicit BuyMarket(Order order) : _(order){}
+    Order order;
+    explicit BuyMarket(Order order) : order(order){}
 };
 
 struct SellMarket : private QueuedOrderTag
 {
-    Order _;
-    explicit SellMarket(Order order) : _(order){}
+    Order order;
+    explicit SellMarket(Order order) : order(order){}
 };
 
 struct Cancel : private QueuedOrderTag
 {
-    Order _;
+    Order order;
     ID cancel_id_;
     explicit Cancel(Order order, ID cancel_id)
-    : _(order),cancel_id_(cancel_id){}
+    : order(order),cancel_id_(cancel_id){}
 };
 
 // update object, returned from order book and sent to client order list
 
 struct OrderUpdate {
 
-    Order _;
+    Order order;
 
     OrderState state_;
     long update_ts{};
 
     OrderUpdate()
-        : _({0,0, 0}),state_(OrderState::SUBMITTED) {}
+        : order({0,0, 0}),state_(OrderState::SUBMITTED) {}
     OrderUpdate(ID id,double price,int qty,OrderState state)
-        : _({id, qty, price}),state_(state) {}
+        : order({id, qty, price}),state_(state) {}
 
 };
 

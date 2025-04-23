@@ -33,7 +33,7 @@ class ClientOrderList {
             [](ClientOrder& order, ID id_)
                    {
                        ID oid{};
-                       std::visit([&](auto& o){oid = o._.id_;},order);
+                       std::visit([&](auto& o){oid = o.order.id_;},order);
                        return oid < id_;
                    });
 
@@ -49,7 +49,7 @@ class ClientOrderList {
     {
         double price{};
 
-        std::visit([&](auto& o){price=o._.price_;},orders[find_by_id(id)]);
+        std::visit([&](auto& o){price=o.order.price_;},orders[find_by_id(id)]);
         return price;
     }
 
@@ -77,11 +77,11 @@ class ClientOrderList {
             std::visit([&](auto& o)
             {
                 //std::cout << "LambdaPrice: " << order._.id_ << std::endl;
-                o._.price_=order._.price_;
+                o.order.price_=order.order.price_;
                 o.state_=order.state_;
-                o._.qty_=order._.qty_;
+                o.order.qty_=order.order.qty_;
 
-            },orders[find_by_id(order._.id_)]);
+            },orders[find_by_id(order.order.id_)]);
 
         }
     }
