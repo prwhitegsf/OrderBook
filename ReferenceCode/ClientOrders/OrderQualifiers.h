@@ -34,7 +34,6 @@ struct OrderUpdate {
     OrderUpdate(ID id,double price,int qty,OrderState state)
         : id_(id),price_(price),qty_(qty),state_(state) {}
 
-
 };
 
 

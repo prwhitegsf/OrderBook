@@ -11,14 +11,14 @@
 using ID = unsigned long;
 
 class CancelOrder : private ClientOrderTag{
-
+public:
     ID id_;
     ID cancel_id_;
     double price_;
     OrderState state_;
     int qty_{};
 
-public:
+
 
     CancelOrder(const ID id, const double price)
     :id_(std::chrono::utc_clock::now().time_since_epoch().count()),

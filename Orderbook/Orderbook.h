@@ -3,7 +3,7 @@
 
 #include <variant>
 #include <memory>
-#include "../OrderTypes/ClientOrders/ClientOrders.h"
+#include "../OrderTypes/Orders.h"
 #include "../Instrument/Instrument.h"
 
 template <typename Matcher, typename PriceLadder>
@@ -13,7 +13,7 @@ class Orderbook
 public:
 
 
-    std::vector<CancelOrder> eod_cancel_orders_;
+
 
     std::shared_ptr<Instrument> instrument_;
 
@@ -28,18 +28,20 @@ public:
         matcher_(matcher){}
 
     template <typename Order>
-    requires std::is_base_of_v<ClientOrderTag,Order>
+    // requires std::is_base_of_v<QueuedOrderTag,Order>
     OrderUpdate SubmitOrder(Order&& order)
     {
-        instrument_->client_order_list_.append_order(order);
-        auto&& update = matcher_.match(std::forward<Order>(order),price_ladder_);
-        // here we should push updates to instrument
-        // bid ask
+        //instrument_->client_order_list_.append_order(order);
+        OrderUpdate update = matcher_.match(std::forward<Order>(order),price_ladder_);
+
+
+        //auto&& update = matcher_.match(std::forward<Order>(order),price_ladder_);
+
         instrument_->update_bid(price_ladder_.bid_price());
         instrument_->update_ask(price_ladder_.ask_price());
         instrument_->update_client_orders(price_ladder_.order_updates_);
 
-        price_ladder_.clear_order_updates();
+        // price_ladder_.clear_order_updates();
 
 
         return update;
@@ -71,27 +73,23 @@ public:
         for (size_t i{price_ladder_.num_prices_}; i > 0; --i)
         {
 
-            if(price_ladder_.level(i-1).depth() != 0)
+            if(price_ladder_.level(i-1).depth_ != 0)
             {
                 std::cout << std::format("{:7}", price_ladder_.price_from_idx(i-1));//,price_ladder_.get_level(i-1).depth());
-                std::cout << std::format("{:7}",price_ladder_.level(i-1).depth());
+                std::cout << std::format("{:7}",price_ladder_.level(i-1).depth_);
                 for (auto const& order : price_ladder_.level(i-1).limit_orders_)
                 {
                     std::cout << std::format("{:4}", order.qty_);
                 }
 
-                std::cout << " || ";
-                for (auto const& order : price_ladder_.level(i-1).stop_orders_)
-                {
-                    std::cout << std::format("{:4}", order.qty_);
-                }
+
 
                 std::cout << std::endl;
             }
         }
     }
 
-    void generate_orders(const double starting_bid, const double starting_ask, const int levels_to_fill)
+    /*void generate_orders(const double starting_bid, const double starting_ask, const int levels_to_fill)
     {
         price_ladder_.bid_idx_ = price_ladder_.idx_from_price(starting_bid);
         price_ladder_.ask_idx_ =  price_ladder_.idx_from_price(starting_ask);
@@ -152,7 +150,7 @@ public:
 
             ++i;
         }
-    }
+    }*/
 };
 
 

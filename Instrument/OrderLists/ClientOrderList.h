@@ -7,7 +7,7 @@
 
 #include <variant>
 #include <vector>
-#include "ClientOrders/ClientOrders.h"
+#include "../../OrderTypes/Orders.h"
 
 
 
@@ -15,10 +15,10 @@
 class ClientOrderList {
 
     public:
-    using ClientOrder = std::variant<   BuyLimitOrder,SellLimitOrder,
-                                        BuyStopOrder,SellStopOrder,
-                                        BuyMarketOrder,SellMarketOrder,
-                                        CancelOrder>;
+    using ClientOrder = std::variant<
+        SubmittedBuyLimit, SubmittedSellLimit,
+        SubmittedBuyMarket,SubmittedSellMarket,
+        SubmittedCancel>;
 
 
     std::vector<ClientOrder> orders;
@@ -33,7 +33,7 @@ class ClientOrderList {
             [](ClientOrder& order, ID id_)
                    {
                        ID oid{};
-                       std::visit([&](auto& o){oid = o.id();},order);
+                       std::visit([&](auto& o){oid = o._.id_;},order);
                        return oid < id_;
                    });
 
@@ -49,7 +49,7 @@ class ClientOrderList {
     {
         double price{};
 
-        std::visit([&](auto& o){price=o.price();},orders[find_by_id(id)]);
+        std::visit([&](auto& o){price=o._.price_;},orders[find_by_id(id)]);
         return price;
     }
 
@@ -63,23 +63,38 @@ class ClientOrderList {
         std::visit([&](auto& o){o.print();},orders[find_by_id(id)]);
     }
 
-    void update_order_list(auto&& order_updates)
+    void update_order_list(auto& order_updates)
     {
         std::cout << "order update size: "<< order_updates.size() << std::endl;
-        /*for (auto& order : order_updates)
-            std::cout << "Price: " << order.price_ << std::endl;*/
 
-        for (auto& order : order_updates)
+
+        for (auto order : order_updates)
         {
-            std::cout << "Price: " << order.price_ << std::endl;
+            //std::cout << "Price: " << order._.price_ << std::endl;
+            //std::cout << "Idx: " << find_by_id(order._.id_)<< std::endl;
+            //size_t my_id = find_by_id(order._.id_);
+            //find_by_id(order._.id_);
             std::visit([&](auto& o)
             {
-                o.price()=order.price_;
-                o.state()=order.state_;
-                o.qty()=order.qty_;
+                //std::cout << "LambdaPrice: " << order._.id_ << std::endl;
+                o._.price_=order._.price_;
+                o.state_=order.state_;
+                o._.qty_=order._.qty_;
 
-            },orders[find_by_id(order.id_)]);
+            },orders[find_by_id(order._.id_)]);
 
+        }
+    }
+
+    void print_all()
+    {
+        for (auto order : orders)
+        {
+            std::visit([&](auto& o){o.print();},order);
+            std::cout << std::endl;
+
+            std::cout<<"---------------------"<<std::endl;
+            std::cout << std::endl;
         }
     }
 };
