@@ -37,10 +37,12 @@ public:
 
         //auto&& update = matcher_.match(std::forward<Order>(order),price_ladder_);
 
-        instrument_->update_bid(price_ladder_.bid_price());
-        instrument_->update_ask(price_ladder_.ask_price());
-        instrument_->update_client_orders(price_ladder_.order_updates_);
-
+       // instrument_->update_bid(price_ladder_.bid_price());
+       // instrument_->update_ask(price_ladder_.ask_price());
+        instrument_->update_bid(matcher_.ask_idx_);
+        instrument_->update_ask(matcher_.ask_idx_);
+        instrument_->update_client_orders(matcher_.order_updates_);
+        matcher_.order_updates_.clear();
         // price_ladder_.clear_order_updates();
 
 
@@ -70,9 +72,64 @@ public:
         std::cout << std::format("{:7}","   Price");
         std::cout << std::format("{:7}","   Depth")<<std::endl;
 
+        matcher_.level_ = matcher_.levels_.end()-1;
+        while (matcher_.level_ != matcher_.levels_.begin()-1)
+        {
+
+            if (matcher_.level_+1 == matcher_.ask_)
+                std::cout << "......................"<<std::endl;
+
+            if(matcher_.level_->depth_ != 0)
+            {
+                std::cout << std::format("{:7}", std::distance(matcher_.levels_.begin(),matcher_.level_));//,matcher_.get_level(i-1).depth());
+                std::cout << std::format("{:7}",matcher_.level_->depth_);
+                for (auto const& order : matcher_.level_->limit_orders_)
+                {
+                    std::cout << std::format("{:4}", order.qty_);
+                }
+
+
+
+                std::cout << std::endl;
+            }
+            --matcher_.level_;
+        }
+    }
+    /*void print_all_orders()
+    {
+        std::cout << std::format("{:7}","   Price");
+        std::cout << std::format("{:7}","   Depth")<<std::endl;
+
+        for (size_t i{matcher_.num_prices_}; i > 0; --i)
+        {
+
+            if (i==matcher_.ask_idx_)
+                std::cout << "......................"<<std::endl;
+            if(matcher_.level(i-1).depth_ != 0)
+            {
+                std::cout << std::format("{:7}", i-1);//,matcher_.get_level(i-1).depth());
+                std::cout << std::format("{:7}",matcher_.level(i-1).depth_);
+                for (auto const& order : matcher_.level(i-1).limit_orders_)
+                {
+                    std::cout << std::format("{:4}", order.qty_);
+                }
+
+
+
+                std::cout << std::endl;
+            }
+        }
+    }*/
+    /*void print_all_orders()
+    {
+        std::cout << std::format("{:7}","   Price");
+        std::cout << std::format("{:7}","   Depth")<<std::endl;
+
         for (size_t i{price_ladder_.num_prices_}; i > 0; --i)
         {
 
+            if (i==price_ladder_.ask_idx_)
+                std::cout << "......................"<<std::endl;
             if(price_ladder_.level(i-1).depth_ != 0)
             {
                 std::cout << std::format("{:7}", price_ladder_.price_from_idx(i-1));//,price_ladder_.get_level(i-1).depth());
@@ -87,7 +144,7 @@ public:
                 std::cout << std::endl;
             }
         }
-    }
+    }*/
 
     /*void generate_orders(const double starting_bid, const double starting_ask, const int levels_to_fill)
     {

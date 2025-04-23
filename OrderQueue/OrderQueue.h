@@ -57,9 +57,11 @@ public:
     void generate_orders(const double starting_bid, const double starting_ask,
         std::vector<int> depths,OrderBook& ob)
     {
-        auto& dom = ob.price_ladder_;
-        dom.bid_idx_ = dom.idx_from_price(starting_bid);
-        dom.ask_idx_ =  dom.idx_from_price(starting_ask);
+        auto& dom = ob.matcher_;
+        dom.bid_idx_ = starting_bid;
+        dom.ask_idx_ =  starting_ask;
+        dom.bid_ = dom.levels_.begin()+dom.bid_idx_;
+        dom.ask_ = dom.levels_.begin()+dom.ask_idx_;
 
         size_t i{dom.bid_idx_};
         for (int depth : depths)
@@ -67,7 +69,7 @@ public:
             int j{depth};
             while (j > 0)
             {
-                SubmittedBuyLimit buy(1,dom.price_from_idx(i),Duration::DAY);
+                SubmittedBuyLimit buy(1,i,Duration::DAY);
                 push(buy);
                 ob.instrument_->client_order_list_.append_order(buy);
                 --j;
@@ -81,7 +83,7 @@ public:
         {
             int j{depth};
             while (j > 0) {
-                SubmittedSellLimit sell(1,dom.price_from_idx(i),Duration::DAY);
+                SubmittedSellLimit sell(1,i,Duration::DAY);
                 push(sell);
                 ob.instrument_->client_order_list_.append_order(sell);
                 --j;

@@ -15,12 +15,12 @@ class Instrument {
 
 private:
     std::string name_{"ES"};
-    double max_price_{20};
-    double min_price_{1};
-    double price_increment_{0.25};
+    double max_price_{100};
+    double min_price_{0};
+    double price_increment_{1};
 
-    double bid_{10.75};
-    double ask_{11.0};
+    double bid_{49};
+    double ask_{51};
 
 
 

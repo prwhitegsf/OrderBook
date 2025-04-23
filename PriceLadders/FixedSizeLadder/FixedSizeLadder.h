@@ -4,6 +4,7 @@
 #include "../../Instrument/Instrument.h"
 #include "../../PriceLevels/DequeLevel/DequeLevel.h"
 using Level = DequeLevel;
+using DomIter = std::vector<Level>::iterator;
 class FixedSizeLadder
 {
 public:
@@ -18,6 +19,8 @@ public:
 
     std::vector<Level> levels_;
 
+    DomIter bid_{ levels_.begin() };
+    DomIter ask_{ levels_.end() };
     size_t bid_idx_;
     size_t ask_idx_;
 
@@ -48,13 +51,19 @@ public:
         max_price_(instrument->max_price()),
         price_increment_(instrument->price_increment()),
         num_prices_(static_cast<size_t>((max_price_ - min_price_)*(1.0/price_increment_))),
-        levels_(num_prices_),bid_idx_(instrument->bid()), ask_idx_(instrument->ask()){}
+        levels_(num_prices_),bid_idx_(instrument->bid()), ask_idx_(instrument->ask())
+    {
+       // bid_ = (levels_.begin() + bid_idx_);
+      //+  ask_ = (levels_.begin() + ask_idx_);
+    }
 
     [[nodiscard]] size_t idx_from_price(double const price) const {
         return static_cast<size_t>((price - min_price_)/(price_increment_));
     }
 
-    [[nodiscard]] double price_from_idx(size_t const index) const {
+    template<typename T>
+    requires std::is_arithmetic_v<T>
+    [[nodiscard]] double price_from_idx(T const index) const {
         return (static_cast<double>(index) * price_increment_) + min_price_;
     }
 

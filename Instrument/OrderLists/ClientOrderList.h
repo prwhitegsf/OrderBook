@@ -65,7 +65,7 @@ class ClientOrderList {
 
     void update_order_list(auto& order_updates)
     {
-        std::cout << "order update size: "<< order_updates.size() << std::endl;
+        //std::cout << "order update size: "<< order_updates.size() << std::endl;
 
 
         for (auto order : order_updates)

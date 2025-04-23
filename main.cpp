@@ -31,35 +31,67 @@ int main()
 
     auto instrument = std::make_shared<Instrument>();
 
-    Fifo fifo;
+    Fifo fifo(100);
     Orderbook<Fifo,Ladder> ob(instrument,Ladder(instrument),fifo);
     Q q{};
 
-    std::cout<<"---------------------"<<std::endl;
+    std::cout<<"==================="<<std::endl;
 
     //OrderQueue<Orderbook<FifoMatchingStrategy<FixedSizeLadder>,FixedSizeLadder>> q{};
-    q.generate_orders(10,11,{5,4,3,2},ob);
+    q.generate_orders(49,50,{5,4,3,2},ob);
     q.SubmitAll(ob);
     ob.print_all_orders();
 
-    std::cout<<"---------------------"<<std::endl;
+    std::cout<<"==================="<<std::endl;
     print(instrument->bid(),"Bid: ");
     print(instrument->ask(),"Ask: ");
+    std::cout<<"==================="<<std::endl;
+    //ob.price_ladder_.ask_ = ob.price_ladder_.levels_.begin()+ob.price_ladder_.ask_idx_;
+    std::cout <<"Ptr to Depth: " <<ob.matcher_.ask_->depth_ << std::endl;
 
-    std::cout<<"---------------------"<<std::endl;
 
-    OrderUpdate sell_limit = CreateOrder(SubmittedSellLimit(20,10,Duration::DAY),ob);
+   /*
+   std::cout<<"==================="<<std::endl;
+
+    OrderUpdate sell_limit = CreateOrder(SubmittedSellLimit(20,11.75,Duration::DAY),ob);
     print(sell_limit);
     ob.print_all_orders();
 
-    std::cout<<"---------------------"<<std::endl;
+    std::cout<<"==================="<<std::endl;
     print(instrument->bid(),"Bid: ");
     print(instrument->ask(),"Ask: ");
+    std::cout<<"==================="<<std::endl;
+    std::cout <<"Ptr to Depth: " <<ob.price_ladder_.ask_->depth_ << std::endl;
+
+    OrderUpdate buy_m = CreateOrder(SubmittedBuyMarket(1),ob);
+    print(buy_m);
+    ob.print_all_orders();
+
+    std::cout<<"==================="<<std::endl;
+    print(instrument->bid(),"Bid: ");
+    print(instrument->ask(),"Ask: ");
+    std::cout<<"==================="<<std::endl;
+    std::cout <<"Ptr to Depth: " <<ob.price_ladder_.ask_->depth_ << std::endl;*/
+
+
+    /*
+    std::cout<<"==================="<<std::endl;
+    print(instrument->bid(),"Bid: ");
+    print(instrument->ask(),"Ask: ");
+    std::cout<<"==================="<<std::endl;
 
     OrderUpdate buy_limit = CreateOrder(SubmittedBuyLimit(21,11,Duration::DAY),ob);
     print(buy_limit);
     ob.print_all_orders();
 
+
+
+    std::cout<<"==================="<<std::endl;
+    print(instrument->bid(),"Bid: ");
+    print(instrument->ask(),"Ask: ");
+
+    print(ob.price_ladder_.ask_idx_,"AskIdx: ");
+    print(ob.price_ladder_.price_from_idx(41.2),"AvgPrice: ");*/
 
 
 

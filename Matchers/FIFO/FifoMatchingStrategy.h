@@ -2,64 +2,167 @@
 #define FIFO_H
 
 #include <ranges>
-
-
+#include "../../PriceLevels/DequeLevel/DequeLevel.h"
+using Level = DequeLevel;
+using DomIter = std::vector<Level>::iterator;
 template<typename PriceLadder>
 class FifoMatchingStrategy
 {
+public:
+    size_t num_prices_;
 
-    public:
-        FifoMatchingStrategy()=default;
+    std::vector<Level> levels_;
+
+    DomIter bid_{ levels_.begin() };
+    DomIter ask_{ levels_.end() };
+
+    DomIter level_{ levels_.begin() };
+
+    std::vector<OrderUpdate> order_updates_;
+    size_t ask_idx_{};
+    size_t bid_idx_{};
+    size_t lev_idx_{};
+
+
+    FifoMatchingStrategy()=default;
+
+    explicit FifoMatchingStrategy(const size_t num_prices)
+        : num_prices_(num_prices),levels_(num_prices){}
+
+    Level& level(size_t idx)
+    {
+
+        return levels_[idx];
+    }
+
 
     OrderUpdate match(BuyLimit&& order, PriceLadder& dom)
     {
 
+        level_ = levels_.begin()+order._.price_;
         // Not crossing the spread
-        if (order._.price_ < dom.price_from_idx(dom.ask_idx_))
-        {
-            dom.level(dom.idx_from_price(order._.price_)).append_limit_order(order._);
+        if (level_ < ask_)
+        {   // lifting the bid
+            if (level_ > bid_)
+                bid_ = level_;
 
-            dom.order_updates_.push_back(
-                OrderUpdate(order._.id_,order._.price_,order._.qty_,OrderState::PENDING));
+            level_->append_limit_order(order._);
+            order_updates_.push_back(OrderUpdate(order._.id_,order._.price_,order._.qty_,OrderState::PENDING));
+            return order_updates_.back();
 
-            // lifting the bid
-            if (order._.price_ > dom.price_from_idx(dom.bid_idx_))
-                dom.bid_idx_ = dom.idx_from_price(order._.price_);
-
-            return dom.order_updates_.back();
         }
+        order_updates_.push_back(OrderUpdate(order._.id_,order._.price_,order._.qty_,OrderState::PENDING));
+        return order_updates_.back();
 
-
-        return crossing_spread(std::move(order._),dom,dom.ask_idx_,dom.bid_idx_,std::plus<>(),std::less_equal<>());
+        //return crossing_spread(std::move(order._),dom,dom.ask_idx_,dom.bid_idx_,std::plus<>(),std::less_equal<>());
     }
+    /*OrderUpdate match(BuyLimit&& order, PriceLadder& dom)
+    {
 
+        level_ = levels_.begin()+order._.price_;
+        // Not crossing the spread
+        if (order._.price_ < ask_idx_)
+        {   // lifting the bid
+            if (order._.price_ > bid_idx_)
+                bid_idx_ = order._.price_;
 
+            levels_.at(order._.price_).append_limit_order(order._);
+            order_updates_.push_back(OrderUpdate(order._.id_,order._.price_,order._.qty_,OrderState::PENDING));
+            return order_updates_.back();
+
+        }
+        order_updates_.push_back(OrderUpdate(order._.id_,order._.price_,order._.qty_,OrderState::PENDING));
+        return order_updates_.back();
+
+        //return crossing_spread(std::move(order._),dom,dom.ask_idx_,dom.bid_idx_,std::plus<>(),std::less_equal<>());
+    }*/
 
     OrderUpdate match(SellLimit&& order, PriceLadder& dom)
     {
+        level_ = levels_.begin()+order._.price_;
+        if (level_ > bid_)
+        {   // lifting the bid
+            if (level_ < ask_)
+                ask_ = level_;
+
+            level_->append_limit_order(order._);
+            order_updates_.push_back(OrderUpdate(order._.id_,order._.price_,order._.qty_,OrderState::PENDING));
+            return order_updates_.back();
+
+        }
+        order_updates_.push_back(OrderUpdate(order._.id_,order._.price_,order._.qty_,OrderState::PENDING));
+        return order_updates_.back();
+        /*
         if (order._.price_ > dom.price_from_idx(dom.bid_idx_))
         {
 
             dom.level(dom.idx_from_price(order._.price_))
                          .append_limit_order(order._);
 
-            dom.order_updates_.push_back(OrderUpdate(order._.id_,order._.price_,order._.qty_,OrderState::PENDING));
+
+            order_updates_.push_back(OrderUpdate(order._.id_,order._.price_,order._.qty_,OrderState::PENDING));
 
             if (order._.price_ < dom.price_from_idx(dom.ask_idx_))
                 dom.ask_idx_ = dom.idx_from_price(order._.price_);
 
-            return dom.order_updates_.back();
+            return order_updates_.back();
+
 
 
         }
         std::cout << "Crossing Spread! "<<std::endl;
         return crossing_spread(std::move(order._),dom,dom.bid_idx_,dom.ask_idx_,std::minus<>(),std::greater_equal<>());
+        */
+
     }
+
+
+    /*OrderUpdate match(SellLimit&& order, PriceLadder& dom)
+    {
+
+        if (order._.price_ > bid_idx_)
+        {   // lifting the bid
+            if (order._.price_ < ask_idx_)
+                ask_idx_ = order._.price_;
+
+            levels_.at(order._.price_).append_limit_order(order._);
+            order_updates_.push_back(OrderUpdate(order._.id_,order._.price_,order._.qty_,OrderState::PENDING));
+            return order_updates_.back();
+
+        }
+        order_updates_.push_back(OrderUpdate(order._.id_,order._.price_,order._.qty_,OrderState::PENDING));
+        return order_updates_.back();
+        /*
+        if (order._.price_ > dom.price_from_idx(dom.bid_idx_))
+        {
+
+            dom.level(dom.idx_from_price(order._.price_))
+                         .append_limit_order(order._);
+
+
+            order_updates_.push_back(OrderUpdate(order._.id_,order._.price_,order._.qty_,OrderState::PENDING));
+
+            if (order._.price_ < dom.price_from_idx(dom.ask_idx_))
+                dom.ask_idx_ = dom.idx_from_price(order._.price_);
+
+            return order_updates_.back();
+
+
+
+        }
+        std::cout << "Crossing Spread! "<<std::endl;
+        return crossing_spread(std::move(order._),dom,dom.bid_idx_,dom.ask_idx_,std::minus<>(),std::greater_equal<>());
+        #1#
+
+    }*/
 
     OrderUpdate match(BuyMarket&& order, PriceLadder& dom)
     {
+        std::cout <<"Ptr to depth in function: " << dom.ask_->depth_ << std::endl;
         fill_levels(order._,dom,dom.ask_idx_,std::plus<>());
         fill_orders_at_level(dom.ask(),order._,dom);
+        std::cout <<"Ptr to depth in function: " << dom.ask_->depth_ << std::endl;
+
 
         return {order._.id_,order._.price_,order._.qty_,OrderState::FILLED};
 
@@ -82,9 +185,10 @@ class FifoMatchingStrategy
         double price = order._.price_;
 
         auto&& cancelled = dom.level(dom.idx_from_price(price)).remove_order(id);
-        dom.order_updates_.push_back(OrderUpdate(cancelled.id_,price,cancelled.qty_,OrderState::FILLED));
+        order_updates_.push_back(OrderUpdate(cancelled.id_,price,cancelled.qty_,OrderState::FILLED));
 
-        dom.order_updates_.push_back(OrderUpdate(order._.id_,order._.price_,0,OrderState::FILLED));
+        order_updates_.push_back(OrderUpdate(order._.id_,order._.price_,0,OrderState::FILLED));
+
 
         return {0,0,0,OrderState::FILLED};
 
@@ -108,22 +212,23 @@ class FifoMatchingStrategy
             order.qty_ -= dom.level(maker_idx).depth_;
 
             dom.level(maker_idx).depth_ = 0;
+            record_filled_orders(dom.level(maker_idx).limit_orders_);
             dom.level(maker_idx).clear();
 
-            record_filled_orders(dom.level(maker_idx).limit_orders_, dom.order_updates_);
+
             taker_idx= maker_idx;
             maker_idx = iterate_idx(maker_idx, 1);
             std::cout << "idx: "<<maker_idx<<" Price: "<<dom.price_from_idx(maker_idx)<<std::endl;
         }
-
-        order.price_  += dom.price_from_idx(maker_idx) * (order.qty_/initial_qty);
+        // This is where it should eventually fill...not great though
+        order.price_  += dom.price_from_idx(taker_idx) * (order.qty_/initial_qty);
         if (order.qty_)
             dom.level(order_price_idx).append_limit_order(order);
 
-        dom.order_updates_.push_back(OrderUpdate(order.id_,order.price_,order.qty_,OrderState::PARTIALLY_FILLED));
-        //record_filled_orders(order, dom.order_updates_);
+        order_updates_.push_back(OrderUpdate(order.id_,order.price_,order.qty_,OrderState::PARTIALLY_FILLED));
 
-        return dom.order_updates_.back();
+        return order_updates_.back();
+
     }
 
 
@@ -146,10 +251,12 @@ class FifoMatchingStrategy
         while (order.qty_ >= dom.level(idx).depth_)
         {
             order.price_ += dom.price_from_idx(idx) * (dom.level(idx).depth_/initial_qty);
-            take_all_level_liquidity(order,dom.level(idx));
+           // take_all_level_liquidity(order,dom.level(idx));
+            order.qty_ -= dom.level(idx).depth_;
 
-            record_filled_orders(dom.level(idx).limit_orders_, dom.order_updates_);
-
+            dom.level(idx).depth_=0;
+            record_filled_orders(dom.level(idx).limit_orders_);
+            dom.level(idx).clear();
             idx = iterate_idx(idx, 1);
         }
 
@@ -170,16 +277,16 @@ class FifoMatchingStrategy
         while (order.qty_ >= level.limit_orders_.front().qty_)
         {
             order.qty_ -= level.limit_orders_.front().qty_;
-            //dom.order_updates_.push_back(OrderUpdate(order.id_,order.price_,order.qty_,OrderState::FILLED));
 
-            record_filled_order(level.limit_orders_.front(),dom.order_updates_);
+
+            record_filled_order(level.limit_orders_.front());
             level.fully_fill_next_order();
         }
 
         order.qty_=0;
 
-        record_filled_order(level.limit_orders_.front(), dom.order_updates_);
-        record_filled_order(order, dom.order_updates_);
+        record_filled_order(level.limit_orders_.front());
+        record_filled_order(order);
 
 
     }
@@ -187,25 +294,26 @@ class FifoMatchingStrategy
     void take_all_level_liquidity (Order& order, Level& level)
     {
         order.qty_ -= level.depth_;
-        std::cout << "QTY In Loop: "<<order.qty_<<std::endl;
         level.clear();
         level.depth_=0;
 
     }
 
-    template<typename Ords, typename U>
-    void record_filled_orders(Ords& orders, U& update_queue)
+    template<typename Ords>
+    void record_filled_orders(Ords& orders)
     {
 
         for (auto& order : orders)
-            update_queue.push_back(OrderUpdate(order.id_,order.price_,order.qty_,OrderState::FILLED));
+            order_updates_.push_back(OrderUpdate(order.id_,order.price_,order.qty_,OrderState::FILLED));
+
 
     }
 
 
-    void record_filled_order(Order& order, auto& update_queue)
+    void record_filled_order(const Order& order)
     {
-        update_queue.push_back(OrderUpdate(order.id_,order.price_,order.qty_,OrderState::FILLED));
+        order_updates_.push_back(OrderUpdate(order.id_,order.price_,order.qty_,OrderState::FILLED));
+
     }
 
 
