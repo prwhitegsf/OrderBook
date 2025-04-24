@@ -2,6 +2,7 @@
 #include <variant>
 #include <algorithm>
 
+#include "DequeLevel.h"
 #include "Printer.h"
 #include "OrderTypes/SubmittedOrderTypes.h"
 #include "OrderQueue/OrderQueue.h"
@@ -12,7 +13,7 @@
 #include "Generators/OrderFactories.h"
 
 
-using Fifo = FifoMatchingStrategy;
+using Fifo = FifoMatchingStrategy<DequeLevel>;
 using Q = OrderQueue<Orderbook<Fifo>>;
 
 void spcr()
@@ -28,8 +29,6 @@ void lb()
 int main()
 {
     Print print;
-
-
 
     auto instrument = std::make_shared<Instrument>();
 
@@ -48,7 +47,7 @@ int main()
     spcr();
     std::cout<<std::endl;
 
-    OrderUpdate sell_limit = gen::CreateOrder(SubmittedSellLimit(10,58,Duration::DAY),ob);
+    OrderUpdate sell_limit = gen::CreateOrder(SubmittedSellLimit<Order>(10,58,Duration::DAY),ob);
     print(sell_limit);
     lb();
     print.ob_all(ob);
@@ -57,20 +56,19 @@ int main()
     print.submitted_order(sell_limit.order.id_, instrument);
     lb();
 
-    spcr();
-    print(instrument->bid(),"Bid: ");
-    print(instrument->ask(),"Ask: ");
-    spcr();
-    lb();
 
 
-    OrderUpdate cancel =gen::CreateOrder(SubmittedCancel(sell_limit.order.id_,sell_limit.order.price_),ob);
+
+    OrderUpdate cancel =gen::CreateOrder(SubmittedCancel<Order>(sell_limit.order.id_,sell_limit.order.price_),ob);
     spcr();
     print(cancel);
 
     print(sizeof(OrderState::SUBMITTED), "float: ");
 
-
+    OrderUpdate bm = gen::CreateOrder(SubmittedBuyMarket<Order>(4),ob);
+    print(bm);
+    lb();
+    print.ob_all(ob);
 
     //print.all_submitted(instrument);
 

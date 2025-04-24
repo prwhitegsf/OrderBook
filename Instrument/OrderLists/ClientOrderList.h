@@ -9,15 +9,15 @@
 #include <vector>
 
 
-
+using ID = unsigned int;
 
 class ClientOrderList {
 
     public:
     using ClientOrder = std::variant<
-        SubmittedBuyLimit, SubmittedSellLimit,
-        SubmittedBuyMarket,SubmittedSellMarket,
-        SubmittedCancel>;
+        SubmittedBuyLimit<Order>, SubmittedSellLimit<Order>,
+        SubmittedBuyMarket<Order>,SubmittedSellMarket<Order>,
+        SubmittedCancel<Order>>;
 
 
     std::vector<ClientOrder> orders;

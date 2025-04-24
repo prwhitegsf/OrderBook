@@ -3,7 +3,7 @@
 
 #include <variant>
 #include <memory>
-//#include "../OrderTypes/Orders.h"
+#include "../OrderTypes/Orders.h"
 #include "../Instrument/Instrument.h"
 
 template <typename Matcher>
@@ -18,10 +18,11 @@ public:
         : instrument_(instrument),
         matcher_(matcher){}
 
-    template <typename Order>
-    OrderUpdate SubmitOrder(Order&& order)
+    template <typename O>
+    requires std::is_base_of_v<QueuedOrderTag,O>
+    OrderUpdate SubmitOrder(O&& order)
     {
-        OrderUpdate update = matcher_.match(std::forward<Order>(order));
+        OrderUpdate update = matcher_.match(std::forward<O>(order));
 
         instrument_->update_bid(matcher_.bid_idx());
         instrument_->update_ask(matcher_.ask_idx());

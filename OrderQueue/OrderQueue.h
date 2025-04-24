@@ -8,10 +8,12 @@
 #include <variant>
 #include <deque>
 
-//#include "../OrderTypes/Orders.h"
-//#include "../Orderbook/Orderbook.h"
 
-using QueueOrder = std::variant<SubmittedBuyLimit,SubmittedSellLimit,SubmittedBuyMarket,SubmittedSellMarket,SubmittedCancel>;
+using QueueOrder = std::variant<SubmittedBuyLimit<Order>,
+                                SubmittedSellLimit<Order>,
+                                SubmittedBuyMarket<Order>,
+                                SubmittedSellMarket<Order>,
+                                SubmittedCancel<Order>>;
 template<class OrderBook>
 class OrderQueue {
 

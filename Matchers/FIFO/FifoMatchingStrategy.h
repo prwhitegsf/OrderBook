@@ -2,14 +2,14 @@
 #define FIFO_H
 
 #include <ranges>
-#include "../../OrderTypes/Orders.h"
-#include "../../PriceLevels/DequeLevel/DequeLevel.h"
-using Level = DequeLevel<Order>;
-using Dom = std::vector<Level>;
-using DomIter = std::vector<Level>::iterator;
-
+//#include "../../OrderTypes/Orders.h"
+template<template<typename>class Lev>
 class FifoMatchingStrategy
 {
+
+    using Level = Lev<Order>;
+    using Dom = std::vector<Level>;
+    using DomIter = typename std::vector<Level>::iterator;
 
 
     static constexpr short UP{1};
@@ -51,7 +51,7 @@ public:
 
 
 
-    OrderUpdate match(BuyLimit&& o)
+    OrderUpdate match(BuyLimit<Order>&& o)
     {
         level_ = dom_.begin()+o.order.price_;
         if (level_ < ask_) // Not crossing the spread
@@ -69,7 +69,7 @@ public:
             std::less_equal<>());
     }
 
-    OrderUpdate match(SellLimit&& o)
+    OrderUpdate match(SellLimit<Order>&& o)
     {
         level_ = dom_.begin()+o.order.price_;
         if (level_ > bid_)
@@ -123,19 +123,19 @@ public:
     }
 
 
-    OrderUpdate match(BuyMarket&& o)
+    OrderUpdate match(BuyMarket<Order>&& o)
     {
         fill_levels(o.order,ask_,UP);
         return fill_orders_at_level(o.order,ask_);
     }
 
-    OrderUpdate match(SellMarket&& o)
+    OrderUpdate match(SellMarket<Order>&& o)
     {
         fill_levels(o.order,bid_,DOWN);
         return fill_orders_at_level(o.order,bid_);
     }
 
-    OrderUpdate match(Cancel&& o)
+    OrderUpdate match(Cancel<Order>&& o)
     {
         level_ = dom_.begin() + o.order.price_;
 
@@ -178,17 +178,17 @@ public:
     OrderUpdate fill_orders_at_level(Order& o, const DomIter& maker)
     {
         maker->depth_ -= o.qty_;
-        while (o.qty_ >= maker->limit_orders_.front().qty_)
+        while (o.qty_ >= maker->front().qty_)
         {
-            o.qty_ -= maker->limit_orders_.front().qty_;
+            o.qty_ -= maker->front().qty_;
 
-            record_fills(maker->limit_orders_.front());
+            record_fills(maker->front());
 
-            maker->limit_orders_.pop_front();
+            maker->pop_front();
         }
 
         o.qty_=0;
-        record_fills(maker->limit_orders_.front());
+        record_fills(maker->front());
         return record_fills(o);
     }
 

@@ -4,7 +4,7 @@
 #include <deque>
 #include <vector>
 //#include "../../OrderTypes/Orders.h"
-
+using ID = unsigned int;
 template <typename Ord>
 class DequeLevel
 {
@@ -23,7 +23,7 @@ public:
     OrdPtr find(ID id)
     {
         return std::lower_bound(limit_orders_.begin(),limit_orders_.end(),id,
-           [&](const Order& order, const ID id_){return order.id_< id_;});
+           [&](const Ord& order, const ID id_){return order.id_< id_;});
     }
 
     Ord front() { return limit_orders_.front(); }
@@ -36,18 +36,17 @@ public:
     }
 
 
-    ID fully_fill_next_order()
+    void pop_front()
     {
-        ID id =  limit_orders_.front().id_;
         limit_orders_.pop_front();
-        return id;
     }
+
 
 
     Ord remove(ID id)
     {
         OrdPtr ord = find_order(id);
-        Order cancelled = *ord;
+        Ord cancelled = *ord;
         depth_ -= cancelled.qty_;
         limit_orders_.erase(ord);
         return cancelled;
@@ -62,7 +61,7 @@ public:
     typename std::deque<Ord>::iterator find_order(ID id)
     {
         return std::lower_bound(limit_orders_.begin(),limit_orders_.end(),id,
-            [&](const Order& order, const ID id_){return order.id_< id_;});
+            [&](const Ord& order, const ID id_){return order.id_< id_;});
     }
 
 
@@ -70,8 +69,8 @@ public:
 
     Ord remove_order(ID id)
     {
-        std::deque<Order>::iterator ord = find_order(id);
-        Order cancelled = *ord;
+        typename std::deque<Ord>::iterator ord = find_order(id);
+        Ord cancelled = *ord;
         depth_ -= cancelled.qty_;
         limit_orders_.erase(ord);
         return cancelled;

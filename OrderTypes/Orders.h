@@ -7,7 +7,19 @@
 
 #include "Qualifiers.h"
 
-using ID = unsigned long;
+template<typename O>
+concept Is_Core_Order = requires(O o)
+{
+    o.id_;
+    o.qty_;
+    o.total_;
+    o.price_;
+    o.state_;
+
+};
+
+
+using ID = unsigned int;
 using Qty = unsigned short int;
 using PriceIdx = unsigned short int;
 
@@ -31,35 +43,40 @@ struct Order {
 
 struct QueuedOrderTag{};
 
+template<Is_Core_Order O>
 struct BuyLimit : private QueuedOrderTag
 {
-    Order order;
-    explicit BuyLimit(Order order) : order(order){}
+    O order;
+    explicit BuyLimit(O order) : order(order){}
 };
 
+template<Is_Core_Order O>
 struct SellLimit : private QueuedOrderTag
 {
-    Order order;
-    explicit SellLimit(Order order) : order(order){}
+    O order;
+    explicit SellLimit(O order) : order(order){}
 };
 
+template<Is_Core_Order O>
 struct BuyMarket : private QueuedOrderTag
 {
-    Order order;
-    explicit BuyMarket(Order order) : order(order){}
+    O order;
+    explicit BuyMarket(O order) : order(order){}
 };
 
+template<Is_Core_Order O>
 struct SellMarket : private QueuedOrderTag
 {
-    Order order;
-    explicit SellMarket(Order order) : order(order){}
+    O order;
+    explicit SellMarket(O order) : order(order){}
 };
 
+template<Is_Core_Order O>
 struct Cancel : private QueuedOrderTag
 {
-    Order order;
+    O order;
     ID cancel_id_;
-    explicit Cancel(Order order, ID cancel_id)
+    explicit Cancel(O order, ID cancel_id)
     : order(order),cancel_id_(cancel_id){}
 };
 

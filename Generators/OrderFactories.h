@@ -31,7 +31,7 @@ namespace gen {
             int j{depth};
             while (j > 0)
             {
-                SubmittedBuyLimit buy(1,i,Duration::DAY);
+                SubmittedBuyLimit<Order> buy(1,i,Duration::DAY);
                 ob.instrument_->client_order_list_.append_order(buy);
                 ob.SubmitOrder(buy.make_queued_order());
                 --j;
@@ -44,7 +44,7 @@ namespace gen {
         {
             int j{depth};
             while (j > 0) {
-                SubmittedSellLimit sell(1,i,Duration::DAY);
+                SubmittedSellLimit<Order>sell(1,i,Duration::DAY);
                 ob.instrument_->client_order_list_.append_order(sell);
                 ob.SubmitOrder(sell.make_queued_order());
                 --j;

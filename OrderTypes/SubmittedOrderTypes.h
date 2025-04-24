@@ -10,16 +10,28 @@
 #include <iostream>
 
 
+
 namespace gen_id
 {
-    inline ID from_ts(){ return std::chrono::utc_clock::now().time_since_epoch().count();}
+    //inline ID from_ts(){ return std::chrono::utc_clock::now().time_since_epoch().count();}
+
+    //inline ID from_start(auto& start){ return std::chrono::utc_clock::now().time_since_epoch().count() - start;}
+
+
+    inline ID from_counter()
+    {
+        static unsigned int counter;
+        counter++;
+        return counter;
+    }
+
 
 }
 
-
+template<Is_Core_Order O>
 class SubmittedBuyLimit {
 public:
-    Order order;
+    O order;
 
     Duration duration_;
     long expiry_;
@@ -27,17 +39,17 @@ public:
 
 
     SubmittedBuyLimit(Qty qty, Qty total, PriceIdx price, Duration duration, long expiry = 0)
-        : order(gen_id::from_ts(),qty,total,price,OrderState::SUBMITTED),
+        : order(gen_id::from_counter(),qty,total,price,OrderState::SUBMITTED),
         duration_(duration),expiry_(expiry){}
 
 
     SubmittedBuyLimit(int qty, PriceIdx price, Duration duration, long expiry = 0)
-    : order(gen_id::from_ts(),qty,qty,price,OrderState::SUBMITTED),
+    : order(gen_id::from_counter(),qty,qty,price,OrderState::SUBMITTED),
     duration_(duration),expiry_(expiry){}
 
 
 
-    BuyLimit make_queued_order() const
+    BuyLimit<O> make_queued_order() const
     {
         return BuyLimit(order);
     }
@@ -51,9 +63,10 @@ public:
     }
 };
 
+template<Is_Core_Order O>
 class SubmittedSellLimit {
 public:
-    Order order;
+    O order;
 
 
     Duration duration_;
@@ -63,16 +76,16 @@ public:
 
 
     SubmittedSellLimit(Qty qty, Qty total, PriceIdx price, Duration duration, long expiry = 0)
-        : order(gen_id::from_ts(),qty,total,price,OrderState::SUBMITTED),
+        : order(gen_id::from_counter(),qty,total,price,OrderState::SUBMITTED),
         duration_(duration),expiry_(expiry){}
 
 
     SubmittedSellLimit(int qty, PriceIdx price, Duration duration, long expiry = 0)
-    : order(gen_id::from_ts(),qty,qty,price,OrderState::SUBMITTED),
+    : order(gen_id::from_counter(),qty,qty,price,OrderState::SUBMITTED),
     duration_(duration),expiry_(expiry){}
 
 
-    SellLimit make_queued_order() const
+    SellLimit<O> make_queued_order() const
     {
         return SellLimit(order);
     }
@@ -86,16 +99,17 @@ public:
     }
 };
 
+template<Is_Core_Order O>
 class SubmittedBuyMarket {
 public:
 
-    Order order;
+    O order;
 
 
     explicit SubmittedBuyMarket(Qty qty)
-        : order(gen_id::from_ts(),qty,qty,0,OrderState::SUBMITTED){}
+        : order(gen_id::from_counter(),qty,qty,0,OrderState::SUBMITTED){}
 
-    BuyMarket make_queued_order() const { return BuyMarket(order); }
+    BuyMarket<O> make_queued_order() const { return BuyMarket(order); }
 
     void print() const
     {
@@ -106,6 +120,7 @@ public:
     }
 };
 
+template<Is_Core_Order O>
 class SubmittedSellMarket {
 public:
 
@@ -113,9 +128,9 @@ public:
 
 
     explicit SubmittedSellMarket(Qty qty)
-     : order(gen_id::from_ts(),qty,qty,0,OrderState::SUBMITTED){}
+     : order(gen_id::from_counter(),qty,qty,0,OrderState::SUBMITTED){}
 
-    SellMarket make_queued_order() const { return SellMarket(order); }
+    SellMarket<O> make_queued_order() const { return SellMarket(order); }
 
     void print() const
     {
@@ -126,17 +141,17 @@ public:
     }
 };
 
-
+template<Is_Core_Order O>
 class SubmittedCancel {
 public:
 
-    Order order;
+    O order;
     ID cancel_id_;
 
     explicit SubmittedCancel(ID cancel_id, PriceIdx price)
-        : order(gen_id::from_ts(),0,0,price,OrderState::SUBMITTED),cancel_id_(cancel_id){}
+        : order(gen_id::from_counter(),0,0,price,OrderState::SUBMITTED),cancel_id_(cancel_id){}
 
-    Cancel make_queued_order() const { return Cancel(order, cancel_id_); }
+    Cancel<O> make_queued_order() const { return Cancel(order, cancel_id_); }
 
     void print() const
     {

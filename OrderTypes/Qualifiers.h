@@ -7,7 +7,7 @@
 
 #include <string>
 
-using ID = unsigned long;
+using ID = unsigned int;
 enum class OrderState : short
 {
 
