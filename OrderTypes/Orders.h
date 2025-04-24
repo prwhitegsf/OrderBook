@@ -7,18 +7,34 @@
 
 #include "Qualifiers.h"
 
-using ID = unsigned long;
-
-
-
-struct Order
+template<typename O>
+concept Is_Core_Order = requires(O o)
 {
-  ID id_;
-  int qty_;
-  double price_;
+    o.id_;
+    o.qty_;
+    o.total_;
+    o.price_;
+    o.state_;
 
-  Order(ID id, int qty, double price)
-    : id_(id), qty_(qty), price_(price){}
+};
+
+
+using ID = unsigned int;
+using Qty = unsigned short int;
+using PriceIdx = unsigned short int;
+
+struct Order {
+
+    ID id_;
+    Qty qty_;
+    Qty total_;
+    PriceIdx price_;
+    float fill_price_{};
+    OrderState state_;
+
+
+    Order(ID id, Qty qty, Qty total, PriceIdx price, OrderState state)
+    : id_(id), qty_(qty),total_(total) ,price_(price),state_(state){}
 
 };
 
@@ -27,51 +43,55 @@ struct Order
 
 struct QueuedOrderTag{};
 
+template<Is_Core_Order O>
 struct BuyLimit : private QueuedOrderTag
 {
-    Order _;
-    explicit BuyLimit(Order order) : _(order){}
+    O order;
+    explicit BuyLimit(O order) : order(order){}
 };
 
+template<Is_Core_Order O>
 struct SellLimit : private QueuedOrderTag
 {
-    Order _;
-    explicit SellLimit(Order order) : _(order){}
+    O order;
+    explicit SellLimit(O order) : order(order){}
 };
 
+template<Is_Core_Order O>
 struct BuyMarket : private QueuedOrderTag
 {
-    Order _;
-    explicit BuyMarket(Order order) : _(order){}
+    O order;
+    explicit BuyMarket(O order) : order(order){}
 };
 
+template<Is_Core_Order O>
 struct SellMarket : private QueuedOrderTag
 {
-    Order _;
-    explicit SellMarket(Order order) : _(order){}
+    O order;
+    explicit SellMarket(O order) : order(order){}
 };
 
+template<Is_Core_Order O>
 struct Cancel : private QueuedOrderTag
 {
-    Order _;
+    O order;
     ID cancel_id_;
-    explicit Cancel(Order order, ID cancel_id)
-    : _(order),cancel_id_(cancel_id){}
+    explicit Cancel(O order, ID cancel_id)
+    : order(order),cancel_id_(cancel_id){}
 };
 
 // update object, returned from order book and sent to client order list
 
 struct OrderUpdate {
 
-    Order _;
-
-    OrderState state_;
+    Order order;
     long update_ts{};
 
     OrderUpdate()
-        : _({0,0, 0}),state_(OrderState::SUBMITTED) {}
-    OrderUpdate(ID id,double price,int qty,OrderState state)
-        : _({id, qty, price}),state_(state) {}
+        : order({0,0,0,0,OrderState::SUBMITTED}) {}
+
+    OrderUpdate(ID id,Qty qty, Qty total, PriceIdx price,OrderState state)
+        : order({id, qty, total, price, state}){}
 
 };
 

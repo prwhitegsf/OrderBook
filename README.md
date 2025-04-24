@@ -1,19 +1,7 @@
 ### To Do
 
+Write concepts for Matcher and Levels
 
-
-
-
-
-
-Update UML and dependency charts
-
-
-
-
-Need to revisit permissions
-- especially regarding the price ladder
-
-Clean up
-
+Tests for
+ - Levels
 
