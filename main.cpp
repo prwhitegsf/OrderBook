@@ -13,8 +13,8 @@
 #include "Generators/OrderFactories.h"
 
 
-using Fifo = FifoMatchingStrategy<DequeLevel>;
-using Q = OrderQueue<Orderbook<Fifo>>;
+using Fifo = FifoMatchingStrategy<Order, DequeLevel>;
+//using Q = OrderQueue<Orderbook>;
 
 void spcr()
 {
@@ -30,11 +30,14 @@ int main()
 {
     Print print;
 
+    //DequeLevel<Order> dl;
+    //static_assert(Is_Level<DequeLevel<Order>>);
+
     auto instrument = std::make_shared<Instrument>();
 
     Fifo fifo(100);
     Orderbook<Fifo> ob(instrument,fifo);
-    Q q{};
+    //Q q{};
 
 
 

@@ -6,17 +6,9 @@
 #define ORDERS_H
 
 #include "Qualifiers.h"
+#include "OrderRequirements.h"
 
-template<typename O>
-concept Is_Core_Order = requires(O o)
-{
-    o.id_;
-    o.qty_;
-    o.total_;
-    o.price_;
-    o.state_;
 
-};
 
 
 using ID = unsigned int;
@@ -27,14 +19,11 @@ struct Order {
 
     ID id_;
     Qty qty_;
-    Qty total_;
     PriceIdx price_;
-    float fill_price_{};
-    OrderState state_;
 
+    Order(ID id, Qty qty,PriceIdx price)
+    : id_(id), qty_(qty),price_(price){}
 
-    Order(ID id, Qty qty, Qty total, PriceIdx price, OrderState state)
-    : id_(id), qty_(qty),total_(total) ,price_(price),state_(state){}
 
 };
 
@@ -86,12 +75,14 @@ struct OrderUpdate {
 
     Order order;
     long update_ts{};
+    float fill_;
+    OrderState state_;
 
     OrderUpdate()
-        : order({0,0,0,0,OrderState::SUBMITTED}) {}
+        : order({0,0,0}),fill_(0),state_(OrderState::SUBMITTED) {}
 
-    OrderUpdate(ID id,Qty qty, Qty total, PriceIdx price,OrderState state)
-        : order({id, qty, total, price, state}){}
+    OrderUpdate(ID id,Qty qty,PriceIdx price,OrderState state, float fill)
+        : order({id, qty,price}), state_(state),fill_(fill){}
 
 };
 

@@ -52,7 +52,6 @@ namespace gen {
 
             ++i;
         }
-
     }
 
 

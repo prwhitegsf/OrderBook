@@ -1,12 +1,13 @@
 #ifndef ORDERBOOK_H
 #define ORDERBOOK_H
 
-#include <variant>
-#include <memory>
-#include "../OrderTypes/Orders.h"
-#include "../Instrument/Instrument.h"
 
-template <typename Matcher>
+#include <memory>
+#include "../Instrument/Instrument.h"
+#include "../Matchers/MatcherRequirements.h"
+
+
+template <Is_Matcher Matcher>
 class Orderbook
 {
     Matcher matcher_;
@@ -22,22 +23,24 @@ public:
     requires std::is_base_of_v<QueuedOrderTag,O>
     OrderUpdate SubmitOrder(O&& order)
     {
-        OrderUpdate update = matcher_.match(std::forward<O>(order));
+        const OrderUpdate update = matcher_.match(std::forward<O>(order));
 
         instrument_->update_bid(matcher_.bid_idx());
         instrument_->update_ask(matcher_.ask_idx());
-        instrument_->update_client_orders(matcher_.order_updates_);
+        instrument_->update_client_orders(matcher_.order_updates());
 
-        matcher_.order_updates_.clear();
+        matcher_.clear_updates();
 
         return update;
     }
 
-    void set_bid(size_t idx){ matcher_.set_bid(matcher_.dom_begin()+idx); }
-    void set_ask(size_t idx){ matcher_.set_ask(matcher_.dom_begin()+idx); }
+    // changed this
+    void set_bid(size_t idx){ matcher_.set_bid(idx); }
+    void set_ask(size_t idx){ matcher_.set_ask(idx); }
 
 
-    const auto& get_dom(){ return matcher_.get_dom(); }
+    const auto& dom(){ return matcher_.dom(); }
+    const auto& get_level(size_t idx){ return matcher_.get_level(idx); }
 
     size_t num_prices() {return matcher_.num_prices();}
 

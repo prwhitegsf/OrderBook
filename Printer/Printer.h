@@ -64,7 +64,7 @@ struct Print {
     // sent order
     void operator() (OrderUpdate& item, std::string const& mess="") const
     {
-        std::cout<< "ID: " << item.order.id_ <<"   State: "<< OrderStateToString(item.order.state_)<<std::endl;
+        std::cout<< "ID: " << item.order.id_ <<"   State: "<< OrderStateToString(item.state_)<<std::endl;
         std::cout<<" price: " << item.order.price_ << " qty: "<< item.order.qty_ << std::endl;
     }
 
@@ -78,7 +78,7 @@ struct Print {
         std::cout << std::format("{:7}","   Price");
         std::cout << std::format("{:7}","   Depth")<<std::endl;
 
-        const auto& dom = ob.get_dom();
+        const auto& dom = ob.dom();
         size_t idx = ob.num_prices();
 
         while (idx > 0)
@@ -92,7 +92,7 @@ struct Print {
             {
                 std::cout << std::format("{:7}", idx);
                 std::cout << std::format("{:7}",dom.at(idx).depth_);
-                for (auto const& order : dom.at(idx).limit_orders_)
+                for (auto const& order : dom.at(idx).get_limit_orders())
                 {
                     std::cout << std::format("{:4}", order.qty_);
                 }
