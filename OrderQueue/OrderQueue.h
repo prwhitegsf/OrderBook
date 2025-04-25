@@ -31,16 +31,26 @@ public:
         return id;
     }
 
-    void push(QueueOrder&& order) { q.push_back(order); }
+    void push_back(QueueOrder&& order) { q.push_back(order); }
 
-    int front_type()const { return q.front().index(); }
+    [[nodiscard]] int front_type()const { return q.front().index(); }
 
-    QueueOrder front() { return q.front(); }
+    [[nodiscard]] QueueOrder front() const { return q.front(); }
 
-    void pop() { q.pop_front(); }
+    void pop_front() { q.pop_front(); }
 
+    void submit_front(OrderBook& ob)
+    {
+        std::visit([&](auto& o)
+       {
+            ob.SubmitOrder(o.make_queued_order());
 
-    void SubmitAll(OrderBook& ob)
+       },q.front());
+
+        q.pop_front();
+    }
+
+    void submit_all(OrderBook& ob)
     {
         for (auto order : q)
         {

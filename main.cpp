@@ -6,16 +6,14 @@
 #include "Printer.h"
 #include "OrderTypes/SubmittedOrderTypes.h"
 #include "OrderQueue/OrderQueue.h"
-
-#include "Orderbook/Orderbook.h"
 #include "Matchers/FIFO/FifoMatchingStrategy.h"
+#include "Orderbook/Orderbook.h"
+
 #include "Instrument/Instrument.h"
 #include "Generators/OrderFactories.h"
 
 
-using Fifo = FifoMatchingStrategy<DequeLevel>;
-using Q = OrderQueue<Orderbook<Fifo>>;
-
+using Fifo = FifoMatchingStrategy<MidLadder<Order,DequeLevel>>;
 void spcr()
 {
     std::cout<<"======================="<<std::endl;
@@ -30,11 +28,14 @@ int main()
 {
     Print print;
 
-    auto instrument = std::make_shared<Instrument>();
 
-    Fifo fifo(100);
+
+    auto instrument = std::make_shared<Instrument>
+    ("Instr",1,100,1,50,51 );
+
+    Fifo fifo;
     Orderbook<Fifo> ob(instrument,fifo);
-    Q q{};
+    //Q q{};
 
 
 

@@ -3,7 +3,8 @@
 
 #include <string>
 #include <chrono>
-#include "OrderLists/ClientOrderList.h"
+#include <utility>
+#include "OrderLists/OrderRecords.h"
 
 
 using Expiry = std::chrono::year_month_day;
@@ -12,13 +13,13 @@ class Instrument {
 
 
 private:
-    static constexpr  std::string name_{"ES"};
-    static constexpr double max_price_{100};
-    static constexpr double min_price_{0};
-    static constexpr double price_increment_{1};
+    std::string name_;
+    double max_price_;
+    double min_price_;
+    double price_increment_;
 
-    size_t bid_idx_{49};
-    size_t ask_idx_{51};
+    size_t bid_idx_;
+    size_t ask_idx_;
 
     double bid_price_{0};
     double ask_price_{0};
@@ -28,22 +29,30 @@ private:
     const std::chrono::year_month_day contract_expiry_;
 
 public:
-    ClientOrderList client_order_list_;
+    OrderRecords order_records_;
 
     Instrument()
-        : contract_expiry_(std::chrono::December / std::chrono::day(15)/ std::chrono::year(2025)) {}
+        : name_("Instr"),max_price_(100),min_price_(0),
+            price_increment_(1),bid_idx_(50),ask_idx_(51),
+            contract_expiry_(std::chrono::December / std::chrono::day(15)/ std::chrono::year(2025)) {}
 
-    static std::string name() { return name_; }
 
-    static double max_price(){ return max_price_; }
+    Instrument(std::string name, const double min_price, const double max_price,const double price_increment,size_t bid, size_t ask)
+        :   name_(std::move(name)),max_price_(max_price),min_price_(min_price),
+            price_increment_(price_increment),bid_idx_(bid),ask_idx_(ask),
+            contract_expiry_(std::chrono::December / std::chrono::day(15)/ std::chrono::year(2025)) {}
 
-    static  double min_price() { return min_price_; }
+    std::string name() { return name_; }
 
-    static double price_increment() { return price_increment_; }
+    [[nodiscard]] double max_price() const { return max_price_; }
 
-    [[nodiscard]] double bid() const { return bid_idx_; }
+    [[nodiscard]] double min_price() const { return min_price_; }
 
-    [[nodiscard]] double ask() const { return ask_idx_; }
+    [[nodiscard]] double price_increment() const { return price_increment_; }
+
+    [[nodiscard]] double bid() const { return price_from_idx(bid_idx_); }
+
+    [[nodiscard]] double ask() const { return price_from_idx(ask_idx_); }
 
 
     void update_bid(const int price_idx)
@@ -58,17 +67,17 @@ public:
         ask_price_ = price_from_idx(price_idx);
     }
 
-    void update_client_orders(auto&& order_updates)
-    { client_order_list_.update_order_list(std::forward<decltype(order_updates)>(order_updates)); }
+    void update_order_records(auto&& order_updates)
+    { order_records_.update_order_list(std::forward<decltype(order_updates)>(order_updates)); }
 
 
-    static size_t idx_from_price(double const price)
+    [[nodiscard]] size_t idx_from_price(double const price)const
     { return static_cast<size_t>((price - min_price_)/(price_increment_)); }
 
 
     template<typename T>
     requires std::is_arithmetic_v<T>
-    static double price_from_idx(T const index)
+    [[nodiscard]] double price_from_idx(T const index)const
     { return (static_cast<double>(index) * price_increment_) + min_price_; }
 };
 

@@ -1,48 +1,54 @@
 #ifndef ORDERBOOK_H
 #define ORDERBOOK_H
 
-#include <variant>
-#include <memory>
-#include "../OrderTypes/Orders.h"
-#include "../Instrument/Instrument.h"
 
-template <typename Matcher>
+#include <memory>
+#include "../Instrument/Instrument.h"
+#include "../Matchers/MatcherRequirements.h"
+#include "../DOMS/MidLadder/MidLadder.h"
+
+template <Is_Matcher Matcher>
 class Orderbook
 {
     Matcher matcher_;
+    MidLadder<Order,DequeLevel> midLadder_{};
 
 public:
 
     std::shared_ptr<Instrument> instrument_;
+
     explicit Orderbook(std::shared_ptr<Instrument> instrument, Matcher matcher)
-        : instrument_(instrument),
+        : instrument_(std::move(instrument)),
         matcher_(matcher){}
 
     template <typename O>
     requires std::is_base_of_v<QueuedOrderTag,O>
     OrderUpdate SubmitOrder(O&& order)
     {
-        OrderUpdate update = matcher_.match(std::forward<O>(order));
+        const OrderUpdate update = matcher_.match(std::forward<O>(order),midLadder_);
 
-        instrument_->update_bid(matcher_.bid_idx());
-        instrument_->update_ask(matcher_.ask_idx());
-        instrument_->update_client_orders(matcher_.order_updates_);
+        instrument_->update_bid(midLadder_.bid());
+        instrument_->update_ask(midLadder_.ask());
+        instrument_->update_order_records(matcher_.order_updates());
 
-        matcher_.order_updates_.clear();
+        matcher_.clear_updates();
 
+        std::cout << "Call to DOM: "<< matcher_.idx_from_dom(midLadder_, 50) << std::endl;
         return update;
     }
 
-    void set_bid(size_t idx){ matcher_.set_bid(matcher_.dom_begin()+idx); }
-    void set_ask(size_t idx){ matcher_.set_ask(matcher_.dom_begin()+idx); }
+    // changed this
+    void set_bid(size_t idx){ midLadder_.set_bid(idx); }
+    void set_ask(size_t idx){midLadder_.set_ask(idx); }
 
 
-    const auto& get_dom(){ return matcher_.get_dom(); }
+    const auto& dom(){ return midLadder_.dom(); }
+    const auto& get_level(size_t idx){ return midLadder_.orders(idx); }
 
-    size_t num_prices() {return matcher_.num_prices();}
+    size_t num_prices() {return midLadder_.num_prices();}
 
-    size_t bid_idx()  {return matcher_.bid_idx();}
-    size_t ask_idx()  {return matcher_.ask_idx();}
+    size_t bid_idx()  {return midLadder_.bid();}
+    size_t ask_idx()  {return midLadder_.ask();}
 };
 
 
