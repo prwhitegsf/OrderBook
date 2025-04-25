@@ -25,10 +25,10 @@ public:
     requires std::is_base_of_v<QueuedOrderTag,O>
     OrderUpdate SubmitOrder(O&& order)
     {
-        const OrderUpdate update = matcher_.match(std::forward<O>(order));
+        const OrderUpdate update = matcher_.match(std::forward<O>(order),midLadder_);
 
-        instrument_->update_bid(matcher_.bid_idx());
-        instrument_->update_ask(matcher_.ask_idx());
+        instrument_->update_bid(midLadder_.bid());
+        instrument_->update_ask(midLadder_.ask());
         instrument_->update_order_records(matcher_.order_updates());
 
         matcher_.clear_updates();
@@ -38,17 +38,17 @@ public:
     }
 
     // changed this
-    void set_bid(size_t idx){ matcher_.set_bid(idx); }
-    void set_ask(size_t idx){ matcher_.set_ask(idx); }
+    void set_bid(size_t idx){ midLadder_.set_bid(idx); }
+    void set_ask(size_t idx){midLadder_.set_ask(idx); }
 
 
-    const auto& dom(){ return matcher_.dom(); }
-    const auto& get_level(size_t idx){ return matcher_.get_level(idx); }
+    const auto& dom(){ return midLadder_.dom(); }
+    const auto& get_level(size_t idx){ return midLadder_.orders(idx); }
 
-    size_t num_prices() {return matcher_.num_prices();}
+    size_t num_prices() {return midLadder_.num_prices();}
 
-    size_t bid_idx()  {return matcher_.bid_idx();}
-    size_t ask_idx()  {return matcher_.ask_idx();}
+    size_t bid_idx()  {return midLadder_.bid();}
+    size_t ask_idx()  {return midLadder_.ask();}
 };
 
 

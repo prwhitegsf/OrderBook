@@ -1,9 +1,16 @@
 ### To Do
 
-Cleaning, probably some renaming
 
-Test for orderbook SubmitOrder()
-Basic Tests for Client Lists
+
+After removing the dom module from fifo I need to:
+- Figure out how to make Fifo a friend class of the MidLadder
+  - so that it's member iterators can be private
+- Re-enable matcher match() requirement, passing in a dom
+- clean up the executing functions in matcher
+
+
+
+Basic Tests for Order Records
 - will need updating
 
 Documentation

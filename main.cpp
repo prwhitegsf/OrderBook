@@ -13,9 +13,7 @@
 #include "Generators/OrderFactories.h"
 
 
-using Fifo = FifoMatchingStrategy<Order, DequeLevel>;
-//using Q = OrderQueue<Orderbook>;
-
+using Fifo = FifoMatchingStrategy<MidLadder<Order,DequeLevel>>;
 void spcr()
 {
     std::cout<<"======================="<<std::endl;
@@ -35,7 +33,7 @@ int main()
     auto instrument = std::make_shared<Instrument>
     ("Instr",1,100,1,50,51 );
 
-    Fifo fifo(100);
+    Fifo fifo;
     Orderbook<Fifo> ob(instrument,fifo);
     //Q q{};
 

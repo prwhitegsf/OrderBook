@@ -23,6 +23,7 @@ Functionality
   - b) represent the order's relative position in the queue
     - this could even be done with a simple static counting function
 
+![img.png](img.png)
 
 Structure
 - Compile Time Polymorphism
