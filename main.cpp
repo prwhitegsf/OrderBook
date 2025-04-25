@@ -6,9 +6,9 @@
 #include "Printer.h"
 #include "OrderTypes/SubmittedOrderTypes.h"
 #include "OrderQueue/OrderQueue.h"
-
-#include "Orderbook/Orderbook.h"
 #include "Matchers/FIFO/FifoMatchingStrategy.h"
+#include "Orderbook/Orderbook.h"
+
 #include "Instrument/Instrument.h"
 #include "Generators/OrderFactories.h"
 
@@ -30,10 +30,10 @@ int main()
 {
     Print print;
 
-    //DequeLevel<Order> dl;
-    //static_assert(Is_Level<DequeLevel<Order>>);
 
-    auto instrument = std::make_shared<Instrument>();
+
+    auto instrument = std::make_shared<Instrument>
+    ("Instr",1,100,1,50,51 );
 
     Fifo fifo(100);
     Orderbook<Fifo> ob(instrument,fifo);

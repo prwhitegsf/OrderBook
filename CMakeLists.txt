@@ -4,12 +4,12 @@ project(OrderBook)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(odb UnitTests/Levels_Deque_Tests.cpp)
+add_executable(odb main.cpp)
 #
 
 
-find_package(GTest CONFIG REQUIRED)
-target_link_libraries(odb PUBLIC GTest::gtest GTest::gtest_main)
+#[[find_package(GTest CONFIG REQUIRED)
+target_link_libraries(odb PUBLIC GTest::gtest GTest::gtest_main)]]
 
 target_include_directories(odb PUBLIC "${PROJECT_BINARY_DIR}"
         "${PROJECT_SOURCE_DIR}/Instrument"
@@ -21,6 +21,7 @@ target_include_directories(odb PUBLIC "${PROJECT_BINARY_DIR}"
         "${PROJECT_SOURCE_DIR}/Instrument/OrderLists"
         "${PROJECT_SOURCE_DIR}/Printer"
         "${PROJECT_SOURCE_DIR}/Generators"
+        "${PROJECT_SOURCE_DIR}/DOMS"
 )
 
 

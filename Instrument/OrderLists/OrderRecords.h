@@ -7,11 +7,11 @@
 
 #include <variant>
 #include <vector>
-
+#include "../../OrderTypes/SubmittedOrderTypes.h"
 
 using ID = unsigned int;
 
-class ClientOrderList {
+class OrderRecords {
 
     public:
     using ClientOrder = std::variant<
@@ -48,15 +48,6 @@ class ClientOrderList {
         return std::distance(orders.begin(),lower);
 
     }
-
-
-
-
-
-
-
-
-
 
     void update_order_list(auto& order_updates)
     {

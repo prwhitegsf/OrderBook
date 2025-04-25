@@ -5,18 +5,20 @@
 #include <memory>
 #include "../Instrument/Instrument.h"
 #include "../Matchers/MatcherRequirements.h"
-
+#include "../DOMS/MidLadder/MidLadder.h"
 
 template <Is_Matcher Matcher>
 class Orderbook
 {
     Matcher matcher_;
+    MidLadder<Order,DequeLevel> midLadder_{};
 
 public:
 
     std::shared_ptr<Instrument> instrument_;
+
     explicit Orderbook(std::shared_ptr<Instrument> instrument, Matcher matcher)
-        : instrument_(instrument),
+        : instrument_(std::move(instrument)),
         matcher_(matcher){}
 
     template <typename O>
@@ -27,10 +29,11 @@ public:
 
         instrument_->update_bid(matcher_.bid_idx());
         instrument_->update_ask(matcher_.ask_idx());
-        instrument_->update_client_orders(matcher_.order_updates());
+        instrument_->update_order_records(matcher_.order_updates());
 
         matcher_.clear_updates();
 
+        std::cout << "Call to DOM: "<< matcher_.idx_from_dom(midLadder_, 50) << std::endl;
         return update;
     }
 

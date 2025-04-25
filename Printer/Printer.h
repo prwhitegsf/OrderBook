@@ -92,7 +92,7 @@ struct Print {
             {
                 std::cout << std::format("{:7}", idx);
                 std::cout << std::format("{:7}",dom.at(idx).depth_);
-                for (auto const& order : dom.at(idx).get_limit_orders())
+                for (auto const& order : dom.at(idx).orders())
                 {
                     std::cout << std::format("{:4}", order.qty_);
                 }
@@ -105,7 +105,7 @@ struct Print {
     // order from client list
     void submitted_order(ID id, auto instr ,std::string const& mess="") const
     {
-        auto c = instr->client_order_list_;
+        auto c = instr->order_records_;
 
         std::visit([&](auto& o){o.print();},c.orders[c.find_by_id(id)]);
 
@@ -113,7 +113,7 @@ struct Print {
 
     void last_n_orders(auto instr, size_t n, std::string const& mess="")
     {
-        auto c = instr->client_order_list_;
+        auto c = instr->order_records_;
 
         std::for_each_n(c.orders.rbegin(),n,[](auto& order)
         {
@@ -126,7 +126,7 @@ struct Print {
 
     void all_submitted(auto instr, std::string const& mess="")
     {
-        auto c = instr->client_order_list_;
+        auto c = instr->order_records_;
 
         for (auto order : c.orders)
         {

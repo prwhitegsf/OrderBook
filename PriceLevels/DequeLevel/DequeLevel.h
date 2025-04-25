@@ -12,9 +12,9 @@ class DequeLevel
 public:
     DequeLevel()=default;
     int depth_{};
-    size_t count() const {return limit_orders_.size();}
+    [[nodiscard]] size_t count() const {return limit_orders_.size();}
 
-    const std::deque<Ord>& get_limit_orders() const {return limit_orders_;}
+    const std::deque<Ord>& orders() const {return limit_orders_;}
 
     using OrdPtr = typename std::deque<Ord>::iterator;
     OrdPtr begin() { return limit_orders_.begin(); }

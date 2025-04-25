@@ -22,12 +22,21 @@ class FifoMatchingStrategy
 
     DomIter bid_{ dom_.begin() };
     DomIter ask_{ dom_.end() };
-    DomIter level_{ dom_.begin() };
+    DomIter limit_{ dom_.begin() };
 
     std::vector<OrderUpdate> order_updates_;
 
 public:
+
+    template<class T>
+    int idx_from_dom(T ladder, size_t idx)
+    {
+        return ladder.num_prices_;
+    }
+
+
     const Dom& dom() {return dom_;};
+    [[nodiscard]]size_t num_prices() const {return num_prices_;};
 
     DomIter begin() {return dom_.begin();};
     DomIter end() {return dom_.end();};
@@ -39,53 +48,49 @@ public:
     size_t bid_idx(){return std::distance(dom_.begin(), bid_);};
     size_t idx(const DomIter ptr){return std::distance(dom_.begin(), ptr);};
 
-    size_t num_prices() const {return num_prices_;};
+
 
     const std::vector<OrderUpdate>& order_updates() {return order_updates_;};
     void clear_updates(){ order_updates_.clear();};
 
     FifoMatchingStrategy()
-    : dom_(100),num_prices_(dom.size()){}
+    : dom_(100),num_prices_(100){}
 
     explicit FifoMatchingStrategy(const size_t num_prices)
-        : dom_(num_prices), num_prices_(dom.size()){}
+        : dom_(num_prices), num_prices_(num_prices){}
 
 
     // Supported order matching
     OrderUpdate match(BuyLimit<Order>&& o)
     {
-        level_ = dom_.begin()+o.order.price_;
+        limit_ = dom_.begin()+o.order.price_;
 
-        if (level_ < ask_)
+        if (limit_ < ask_)
         {
-            if (level_ > bid_)
-                bid_ = level_;
+            if (limit_ > bid_)
+                bid_ = limit_;
 
-            level_->append_new(o.order);
+            limit_->append_new(o.order);
             return record_order_update(o.order,OrderState::PENDING,o.order.price_);
 
         }
 
-        return crossing_spread(std::move(o.order),
-            ask_,bid_,UP,
-            std::less_equal<>());
+        return crossing_spread(std::move(o.order),ask_,bid_,UP,std::less_equal<>());
     }
 
     OrderUpdate match(SellLimit<Order>&& o)
     {
-        level_ = dom_.begin()+o.order.price_;
-        if (level_ > bid_) {
+        limit_ = dom_.begin()+o.order.price_;
+        if (limit_ > bid_) {
 
-            if (level_ < ask_)
-                ask_ = level_;
+            if (limit_ < ask_)
+                ask_ = limit_;
 
-            level_->append_new(o.order);
+            limit_->append_new(o.order);
             return record_order_update(o.order,OrderState::PENDING,o.order.price_);
         }
 
-        return crossing_spread(std::move(o.order),
-            bid_,ask_,DOWN,
-            std::greater_equal<>());
+        return crossing_spread(std::move(o.order),bid_,ask_,DOWN,std::greater_equal<>());
     }
 
     OrderUpdate match(BuyMarket<Order>&& o)
@@ -100,8 +105,8 @@ public:
 
     OrderUpdate match(Cancel<Order>&& o)
     {
-        level_ = begin() + o.order.price_;
-        auto&& cancelled = level_->remove(o.cancel_id_);
+        limit_ = begin() + o.order.price_;
+        auto&& cancelled = limit_->remove(o.cancel_id_);
 
         order_updates_.push_back(OrderUpdate(cancelled.id_,cancelled.qty_,o.order.price_,OrderState::CANCELLED,0));
         order_updates_.push_back(OrderUpdate(o.order.id_,0,o.order.price_,OrderState::FILLED,0));
@@ -111,7 +116,6 @@ public:
     }
 
     // Aggressing Orders
-
     float fill_levels(Order& o, DomIter& maker, const int direction)
     {
         const double initial_qty = o.qty_;
@@ -137,7 +141,7 @@ public:
         return fill;
     }
 
-    OrderUpdate fill_orders_at_level(Order& o, const DomIter& maker,float fill)
+    OrderUpdate fill_orders_at_level(Order& o, const DomIter& maker,const float fill)
     {
         maker->depth_ -= o.qty_;
         while (o.qty_ >= maker->front().qty_)
@@ -156,15 +160,15 @@ public:
         return record_fills(o,fill);
     }
 
-    template<class U>
+    // needs a requirement
+    template<typename U>
     OrderUpdate crossing_spread(Order&& o,DomIter& maker,DomIter& taker, const int direction, U cmpr)
     {
         const double initial_qty = o.qty_;
         float fill{};
 
-        while (cmpr(maker, level_ ) && o.qty_ >= maker->depth_)
+        while (cmpr(maker, limit_ ) && o.qty_ >= maker->depth_)
         {
-
             fill += idx(maker) * (maker->depth_/initial_qty);
             o.qty_ -= maker->depth_;
             maker->depth_ = 0;
@@ -186,28 +190,24 @@ public:
             taker->append_new(o);
 
         return record_order_update(o,OrderState::PARTIALLY_FILLED,fill);
-
     }
 
 
     // Order Logging
 
-    OrderUpdate record_order_update(Order o, OrderState state, float fill)
+    OrderUpdate record_order_update(Order o, const OrderState state, const float fill)
     {
-
         order_updates_.push_back(OrderUpdate(o.id_,o.qty_,o.price_,state,fill));
-
         return order_updates_.back();
     }
 
-    OrderUpdate record_fills(Order o,float fill)
+    OrderUpdate record_fills(Order o,const float fill)
     {
-
         order_updates_.push_back(OrderUpdate(o.id_,o.qty_,o.price_,OrderState::FILLED,fill));
         return order_updates_.back();
     }
 
-    void record_fills(const DomIter& level, float fill)
+    void record_fills(const DomIter& level, const float fill)
     {
         auto o = level->begin();
 
@@ -215,22 +215,9 @@ public:
             order_updates_.push_back(OrderUpdate(o->id_,o->qty_,o->price_,OrderState::FILLED,fill));
             ++o;
         }
-
     }
-
-
 
 };
 
-/*    if (maker->front().qty_)
-            {
-                if (maker->front().qty_ < maker->front().qty_)
-                    maker->front().qty_ = maker->front().qty_;
-
-                record_order_update(maker->front(),OrderState::PARTIALLY_FILLED);
-                maker->copy_to_back(maker->front());
-                maker->pop_front();
-            }
-*/
 
 #endif

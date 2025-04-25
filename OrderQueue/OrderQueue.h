@@ -33,9 +33,9 @@ public:
 
     void push_back(QueueOrder&& order) { q.push_back(order); }
 
-    int front_type()const { return q.front().index(); }
+    [[nodiscard]] int front_type()const { return q.front().index(); }
 
-    QueueOrder front() { return q.front(); }
+    [[nodiscard]] QueueOrder front() const { return q.front(); }
 
     void pop_front() { q.pop_front(); }
 

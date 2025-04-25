@@ -23,31 +23,31 @@ public:
     Fifo f;
 
 
-    BuyLimit<Order> make_buy_limit(ID id, Qty qty, PriceIdx price)
+    static BuyLimit<Order> make_buy_limit(ID id, Qty qty, PriceIdx price)
     {
         Order o{id, qty, price};
         return BuyLimit(o);
     }
 
-    SellLimit<Order> make_sell_limit(ID id, Qty qty, PriceIdx price)
+    static SellLimit<Order> make_sell_limit(ID id, Qty qty, PriceIdx price)
     {
         Order o{id, qty, price};
         return SellLimit(o);
     }
 
-    BuyMarket<Order> make_buy_market(ID id, Qty qty)
+    static BuyMarket<Order> make_buy_market(ID id, Qty qty)
     {
         Order o{id, qty,0};
         return BuyMarket(o);
     }
 
-    SellMarket<Order> make_sell_market(ID id, Qty qty)
+    static SellMarket<Order> make_sell_market(ID id, Qty qty)
     {
         Order o{id, qty,0};
         return SellMarket(o);
     }
 
-    Cancel<Order> make_cancel(ID cancel_id, PriceIdx price)
+    static Cancel<Order> make_cancel(ID cancel_id, PriceIdx price)
     {
         Order o{1000, 0,price};
         return Cancel<Order>(o, cancel_id);
