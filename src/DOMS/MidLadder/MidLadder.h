@@ -8,19 +8,15 @@
 #include <vector>
 
 
-#include "../../PriceLevels/LevelRequirements.h"
-#include "../../Matchers/MatcherRequirements.h"
+#include "../../Levels/LevelRequirements.h"
 
-
-
-template<typename Order, template<Is_Level>typename Lev>
+template<Is_Level Level>
 class MidLadder {
 
+    template<typename U>
+    friend class FifoStrategy;
 
-
-public:
-
-    using Level = Lev<Order>;
+    //using Level = Lev<Order>;
     using Dom = std::vector<Level>;
     using DomIter = typename std::vector<Level>::iterator;
 
@@ -31,12 +27,13 @@ public:
     DomIter ask_{ dom_.end() };
     DomIter limit_{ dom_.begin() };
 
+public:
 
     MidLadder()
     : dom_(100), num_prices_(100), bid_(dom_.begin()+50), ask_(dom_.begin()+51), limit_(0) {}
 
     MidLadder(const size_t num_prices, size_t bid,size_t ask)
-        : num_prices_(num_prices), bid_(dom_.begin()+bid), ask_(dom_.begin()+ask) {}
+        : dom_(num_prices),num_prices_(num_prices), bid_(dom_.begin()+bid), ask_(dom_.begin()+ask) {}
 
 
 
@@ -53,7 +50,7 @@ public:
 
     const Dom& dom() const {return dom_;}
     const auto& orders(size_t idx){ return (dom_.begin()+idx)->orders(); }
-
+    int depth(size_t idx) const {return (dom_.begin()+idx)->depth();}
 };
 
 

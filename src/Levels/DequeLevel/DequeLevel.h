@@ -2,33 +2,35 @@
 #define DEQUELEVEL_H
 
 #include <deque>
+#include <algorithm>
+#include "../../OrderTypes/Orders.h"
 
 using ID = unsigned int;
-template <typename Ord>
+
 class DequeLevel
 {
-    std::deque<Ord> limit_orders_;
+    std::deque<Order> limit_orders_;
 
 public:
     DequeLevel()=default;
     int depth_{};
     [[nodiscard]] size_t count() const {return limit_orders_.size();}
 
-    const std::deque<Ord>& orders() const {return limit_orders_;}
+    const std::deque<Order>& orders() const {return limit_orders_;}
 
-    using OrdPtr = typename std::deque<Ord>::iterator;
+    using OrdPtr = typename std::deque<Order>::iterator;
     OrdPtr begin() { return limit_orders_.begin(); }
     OrdPtr end() { return limit_orders_.end(); }
 
-    Ord& front() { return limit_orders_.front(); }
-    Ord& back() { return limit_orders_.back(); }
+    Order& front() { return limit_orders_.front(); }
+    Order& back() { return limit_orders_.back(); }
 
-    void append_new(Ord limit_order) {
+    void append_new(Order limit_order) {
         depth_ += limit_order.qty_;
         limit_orders_.push_back(limit_order);
     }
 
-    void copy_to_back(Ord limit_order)
+    void copy_to_back(Order limit_order)
     {
         limit_orders_.push_back(limit_order);
     }
@@ -37,9 +39,9 @@ public:
 
     void clear() { limit_orders_.clear(); }
 
-    Ord remove(const ID id) {
+    Order remove(const ID id) {
         OrdPtr ord = find(id);
-        Ord cancelled = *ord;
+        Order cancelled = *ord;
         depth_ -= cancelled.qty_;
         limit_orders_.erase(ord);
         return cancelled;
@@ -47,9 +49,10 @@ public:
 
     OrdPtr find(ID id) {
         return std::lower_bound(limit_orders_.begin(),limit_orders_.end(),id,
-           [&](const Ord& order, const ID id_){return order.id_< id_;});
+           [&](const Order& order, const ID id_){return order.id_< id_;});
     }
 
+    int depth() const { return depth_; }
 
 
 

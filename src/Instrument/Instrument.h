@@ -54,6 +54,14 @@ public:
 
     [[nodiscard]] double ask() const { return price_from_idx(ask_idx_); }
 
+    [[nodiscard]] size_t bid_idx() const { return bid_idx_; }
+
+    [[nodiscard]] size_t ask_idx() const { return ask_idx_; }
+
+    [[nodiscard]] size_t num_prices() const
+    {
+        return idx_from_price(max_price()) - idx_from_price(min_price());
+    }
 
     void update_bid(const int price_idx)
     {

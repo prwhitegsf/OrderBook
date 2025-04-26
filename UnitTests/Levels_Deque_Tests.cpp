@@ -4,8 +4,8 @@
 #include "gtest/gtest.h"
 #include <random>
 #include <vector>
-#include "../OrderTypes/SubmittedOrderTypes.h"
-#include "../PriceLevels/DequeLevel/DequeLevel.h"
+#include "../src/OrderTypes/SubmittedOrderTypes.h"
+#include "../src/Levels/DequeLevel/DequeLevel.h"
 
 unsigned int rand_int(unsigned int min, unsigned int max)
 {
@@ -19,7 +19,7 @@ class DequeLevelTest : public testing::Test
 {
 
 public:
-    DequeLevel<Order> dq;
+    DequeLevel dq;
 
     Order make_random_order(ID id)
     {

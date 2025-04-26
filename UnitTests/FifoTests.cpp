@@ -4,15 +4,15 @@
 #include "gtest/gtest.h"
 #include <random>
 #include <vector>
-#include "../OrderTypes/SubmittedOrderTypes.h"
-#include "../PriceLevels/DequeLevel/DequeLevel.h"
-#include "../Matchers/FIFO/FifoMatchingStrategy.h"
-#include "../DOMS/MidLadder/MidLadder.h"
-#include "Printer.h"
+#include "../src/OrderTypes/SubmittedOrderTypes.h"
+#include "../src/Levels/DequeLevel/DequeLevel.h"
+#include "../src/Matchers/FIFO/FifoStrategy.h"
+#include "../src/DOMS/MidLadder/MidLadder.h"
+#include "../src/Printer/Printer.h"
 
 
-
-using Fifo = FifoMatchingStrategy<MidLadder<Order,DequeLevel>>;
+using Dom = MidLadder<DequeLevel>;
+using Fifo = FifoStrategy<Dom>;
 class FifoTest : public ::testing::Test
 {
 
@@ -21,40 +21,49 @@ public:
 
     Print print;
     Fifo f;
-    MidLadder<Order,DequeLevel> dom;
+    Dom dom;
 
 
-    static BuyLimit<Order> make_buy_limit(ID id, Qty qty, PriceIdx price)
+    static BuyLimit<Order> make_buy_limit(const ID id, const Qty qty, const PriceIdx price)
     {
         Order o{id, qty, price};
         return BuyLimit(o);
     }
 
-    static SellLimit<Order> make_sell_limit(ID id, Qty qty, PriceIdx price)
+    static SellLimit<Order> make_sell_limit(const ID id, const Qty qty, const PriceIdx price)
     {
         Order o{id, qty, price};
         return SellLimit(o);
     }
 
-    static BuyMarket<Order> make_buy_market(ID id, Qty qty)
+    static BuyMarket<Order> make_buy_market(const ID id, const Qty qty)
     {
         Order o{id, qty,0};
         return BuyMarket(o);
     }
 
-    static SellMarket<Order> make_sell_market(ID id, Qty qty)
+    static SellMarket<Order> make_sell_market(const ID id, const Qty qty)
     {
         Order o{id, qty,0};
         return SellMarket(o);
     }
 
-    static Cancel<Order> make_cancel(ID cancel_id, PriceIdx price)
+    static Cancel<Order> make_cancel(const ID cancel_id, const PriceIdx price)
     {
         Order o{1000, 0,price};
         return Cancel<Order>(o, cancel_id);
     }
 
-    void generate_dom_orders(size_t bid, size_t ask, std::vector<int> level_depths)
+
+    void generate_default_dom()
+    {
+        std::vector<int> depths{5,4,3,2,1};
+        size_t bid = 50;
+        size_t ask = 51;
+        generate_dom_orders(bid,ask,depths);
+    }
+
+    void generate_dom_orders(const size_t bid, const size_t ask, const std::vector<int>& level_depths)
     {
         if (dom.num_prices() < level_depths.size())
             return;
@@ -66,77 +75,54 @@ public:
         size_t i = bid;
         for(const int depth : level_depths)
         {
-            int j{depth};
-            while (j > 0)
+            int j{};
+
+            while (j <= depth-2)
             {
-                SubmittedBuyLimit<Order> buy(1,i,Duration::DAY);
-                f.match(make_buy_limit(id,1,i),dom);
+                f.match(make_buy_limit(id,2,i),dom);
                 ++id;
-                --j;
+                j += 2;
             }
+            if (j != depth)
+                f.match(make_buy_limit(id,1,i),dom);
+
+
             --i;
         }
 
         i = ask;
         for (const int depth : level_depths)
         {
-            int j{depth};
-            while (j > 0) {
-
-                f.match(make_sell_limit(id,1,i),dom);
+            int j{};
+            while (j <= depth-2)
+            {
+                f.match(make_sell_limit(id,2,i),dom);
                 ++id;
-                --j;
+                j += 2;
             }
+            if (j != depth)
+                f.match(make_sell_limit(id,1,i),dom);
 
             ++i;
         }
 
     }
 
-    void generate_default_dom()
-    {
-        std::vector<int> depths{5,4,3,2,1};
-        size_t bid = 50;
-        size_t ask = 51;
-        generate_dom_orders(bid,ask,depths);
-    }
 };
 
 
-/*
-TEST_F(FifoTest,Construct)
-{
-    Fifo fifo(100);
-    EXPECT_EQ(fifo.num_prices(),100);
-
-    auto it = std::begin(fifo);
-    while (it != std::end(fifo))
-    {
-        EXPECT_EQ(it->depth_, 0);
-        ++it;
-    }
-}
-*/
 
 TEST_F(FifoTest,PlaceNewBuyLimit)
 {
-
-
     f.match(make_buy_limit(12,10,50),dom);
-
     EXPECT_EQ((std::begin(dom.dom())+50)->depth_,10);
-
 }
 
 
 TEST_F(FifoTest,PlaceNewSellLimit)
 {
-
-
     f.match(make_sell_limit(12,10,50),dom);
-
     EXPECT_EQ((std::begin(dom.dom())+50)->depth_,10);
-
 }
 
 
