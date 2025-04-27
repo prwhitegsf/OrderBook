@@ -14,7 +14,7 @@ namespace gen {
     template<typename Ord, typename Book> // Bypasses order queue
     OrderUpdate CreateOrder(Ord submitted_order,Book& ob)
     {
-        ob.instrument_->order_records_.append_order(submitted_order);
+        ob.inst_->order_records_.append_order(submitted_order);
         return ob.SubmitOrder(submitted_order.make_queued_order());
     }
 
@@ -32,7 +32,7 @@ namespace gen {
             while (j > 0)
             {
                 SubmittedBuyLimit<Order> buy(1,i,Duration::DAY);
-                ob.instrument_->order_records_.append_order(buy);
+                ob.inst_->order_records_.append_order(buy);
                 ob.SubmitOrder(buy.make_queued_order());
                 --j;
             }
@@ -45,7 +45,7 @@ namespace gen {
             int j{depth};
             while (j > 0) {
                 SubmittedSellLimit<Order>sell(1,i,Duration::DAY);
-                ob.instrument_->order_records_.append_order(sell);
+                ob.inst_->order_records_.append_order(sell);
                 ob.SubmitOrder(sell.make_queued_order());
                 --j;
             }

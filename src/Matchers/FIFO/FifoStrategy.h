@@ -1,11 +1,11 @@
 #ifndef FIFO_H
 #define FIFO_H
 
-#include "../../PriceLevels/LevelRequirements.h"
 
+#include "../../DOMS/DomRequirements.h"
 
-template<typename DOM>
-class FifoMatchingStrategy
+template<Is_Dom DOM>
+class FifoStrategy
 {
 
     static constexpr short UP{1};
@@ -15,18 +15,11 @@ class FifoMatchingStrategy
 
 public:
 
-    template<class T>
-    int idx_from_dom(T ladder, size_t idx)
-    {
-        return ladder.num_prices_;
-    }
-
-
 
     const std::vector<OrderUpdate>& order_updates() {return order_updates_;};
     void clear_updates(){ order_updates_.clear();};
 
-    FifoMatchingStrategy()=default;
+    FifoStrategy()=default;
 
 
 
@@ -40,7 +33,7 @@ public:
             if (dom.limit_ > dom.bid_)
                 dom.bid_ = dom.limit_;
 
-            dom.limit_->append_new(o.order);
+            dom.limit_->append(o.order);
             return record_order_update(o.order,OrderState::PENDING,o.order.price_);
 
         }
@@ -58,7 +51,7 @@ public:
             if (dom.limit_ < dom.ask_)
                 dom.ask_ = dom.limit_;
 
-            dom.limit_->append_new(o.order);
+            dom.limit_->append(o.order);
             return record_order_update(o.order,OrderState::PENDING,o.order.price_);
         }
 
@@ -69,12 +62,14 @@ public:
 
     OrderUpdate match(BuyMarket<Order>&& o, DOM& dom)
     {
-        return fill_orders_at_level(o.order,dom,dom.ask_,fill_levels(o.order,dom,dom.ask_,UP));
+        return execute_market(o.order,dom,dom.ask_,UP);
+
     }
 
     OrderUpdate match(SellMarket<Order>&& o, DOM& dom)
     {
-        return fill_orders_at_level(o.order,dom,dom.bid_,fill_levels(o.order,dom,dom.bid_,DOWN));
+        return execute_market(o.order,dom,dom.bid_,DOWN);
+
     }
 
     OrderUpdate match(Cancel<Order>&& o, DOM& dom)
@@ -89,36 +84,30 @@ public:
 
     }
 
-    // Aggressing Orders
-    float fill_levels(Order& o, DOM& dom, auto& maker, const int direction)
+    OrderUpdate execute_market(Order& o, DOM& dom, auto& maker, const int direction)
     {
         const double initial_qty = o.qty_;
-        float fill{};
+        float avg_fill{};
+
+        // Market order takes all the available liquidity at current the level at once
         while (o.qty_ >= maker->depth_)
         {
-
-            fill += dom.idx(maker) * (maker->depth_/initial_qty);
+            // updating aggressing order
+            avg_fill += dom.idx(maker) * (maker->depth_/initial_qty);
             o.qty_ -= maker->depth_;
+            // updating resting orders
             maker->depth_=0;
-            record_fills(dom,dom.idx(maker));
-            //record_fills(maker,dom.idx(maker));
-            //record_fills(maker,dom.idx(maker));
+            record_fills(maker,dom.idx(maker));
             maker->clear();
-
+            // next price
             std::advance(maker,direction);
         }
 
-        if (fill == 0)
-            fill = dom.idx(maker);
-        else
-            fill += dom.idx(maker) * (o.qty_/initial_qty);
-
-        return fill;
-    }
-
-    OrderUpdate fill_orders_at_level(Order& o, DOM& dom, const auto& maker,const float fill)
-    {
+        // Any remaining orders are executed at the current maker price
+        avg_fill += avg_fill == 0 ? dom.idx(maker) : dom.idx(maker) * (o.qty_/initial_qty);
         maker->depth_ -= o.qty_;
+
+        // Market order takes the liquidity at this level order by order
         while (o.qty_ >= maker->front().qty_)
         {
             o.qty_ -= maker->front().qty_;
@@ -129,42 +118,70 @@ public:
             maker->pop_front();
         }
 
-        o.qty_ = 0;
-        record_fills(maker->front(),dom.idx(maker));
+        // Partial
+        if (o.qty_){
+            maker->front().qty_ -= o.qty_;
+            o.qty_ = 0;
+            record_fills(maker->front(),dom.idx(maker));
+        }
 
-        return record_fills(o,fill);
+        // push and return the market order
+        return record_fills(o,avg_fill);
     }
+
 
     // needs a requirement
     template<typename U>
     OrderUpdate crossing_spread(Order&& o,DOM& dom,auto& limit, auto& maker,auto& taker, const int direction, U cmpr)
     {
         const double initial_qty = o.qty_;
-        float fill{};
+        float avg_fill{};
 
         while (cmpr(maker, limit ) && o.qty_ >= maker->depth_)
         {
-            fill += dom.idx(maker) * (maker->depth_/initial_qty);
+
+            // updating aggressing order
+            avg_fill += dom.idx(maker) * (maker->depth_/initial_qty);
             o.qty_ -= maker->depth_;
+
+            // updating resting orders
             maker->depth_ = 0;
-            record_fills(dom,dom.idx(maker));
-            //record_fills(maker,dom.idx(maker));
+            record_fills(maker,dom.idx(maker));
             maker->clear();
 
-            taker = maker;
+            // next price, both sides move
+
             std::advance(maker,direction);
         }
 
-        if (fill == 0)
-            fill = dom.idx(maker);
-        else
-            fill += dom.idx(taker) * (o.qty_/initial_qty);
-        maker->depth_ -= o.qty_;
+        // Occurs when remaining order qty < maker depth, but we're still below the limit price
+        // So we fill the remainder at market
+        if (o.qty_ < maker->depth_ && cmpr(maker, limit))
+        {
+            avg_fill += avg_fill == 0 ? dom.idx(maker) : dom.idx(maker) * (o.qty_/initial_qty);
+            maker->depth_ -= o.qty_;
 
-        if (o.qty_)
-            taker->append_new(o);
+            while (o.qty_ >= maker->front().qty_)
+            {
 
-        return record_order_update(o,OrderState::PARTIALLY_FILLED,fill);
+                o.qty_ -= maker->front().qty_;
+                maker->front().qty_=0;
+
+                record_fills(maker->front(),dom.idx(maker));
+
+                maker->pop_front();
+            }
+        }
+        // Occurs when remaining qty is not zero, but we're at the limit price
+        else if (o.qty_ != 0)
+        {
+            taker = maker-direction;
+            avg_fill += avg_fill == 0 ? dom.idx(taker) : dom.idx(taker) * (o.qty_/initial_qty);
+            taker->append(o);
+
+        }
+
+        return record_order_update(o,OrderState::PARTIALLY_FILLED,avg_fill);
     }
 
 
@@ -182,14 +199,16 @@ public:
         return order_updates_.back();
     }
 
-    void record_fills(const DOM& dom, const float fill)
-    {
-        /*auto o = dom.orders()->begin();
 
-        while (o != dom.orders()->end()) {
-            order_updates_.push_back(OrderUpdate(o->id_,o->qty_,o->price_,OrderState::FILLED,fill));
+
+    void record_fills(auto& maker,const int idx)
+    {
+        auto o = maker->limit_orders_.begin();
+
+        while (o != maker->limit_orders_.end()) {
+            order_updates_.push_back(OrderUpdate(o->id_,o->qty_,o->price_,OrderState::FILLED,idx));
             ++o;
-        }*/
+        }
     }
 
 };

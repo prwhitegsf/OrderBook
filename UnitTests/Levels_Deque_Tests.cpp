@@ -4,8 +4,8 @@
 #include "gtest/gtest.h"
 #include <random>
 #include <vector>
-#include "../OrderTypes/SubmittedOrderTypes.h"
-#include "../PriceLevels/DequeLevel/DequeLevel.h"
+#include "../src/OrderTypes/SubmittedOrderTypes.h"
+#include "../src/Levels/DequeLevel/DequeLevel.h"
 
 unsigned int rand_int(unsigned int min, unsigned int max)
 {
@@ -19,7 +19,7 @@ class DequeLevelTest : public testing::Test
 {
 
 public:
-    DequeLevel<Order> dq;
+    DequeLevel dq;
 
     Order make_random_order(ID id)
     {
@@ -38,7 +38,7 @@ public:
         ID id = rand_int(1, 100);
         while (count--)
         {
-            dq.append_new(make_random_order(id));
+            dq.append(make_random_order(id));
             id += rand_int(1, 100);
         }
     }
@@ -68,19 +68,19 @@ TEST_F(DequeLevelTest,AppendNew)
     Order o3{100,200,300};
 
 
-    dq.append_new(o1);
+    dq.append(o1);
     EXPECT_EQ(dq.back().id_,1);
     EXPECT_EQ(dq.back().qty_,2);
     EXPECT_EQ(dq.back().price_,3);
 
 
-    dq.append_new(o2);
+    dq.append(o2);
     EXPECT_EQ(dq.back().id_,10);
     EXPECT_EQ(dq.back().qty_,20);
     EXPECT_EQ(dq.back().price_,30);
 
 
-    dq.append_new(o3);
+    dq.append(o3);
     EXPECT_EQ(dq.back().id_,100);
     EXPECT_EQ(dq.back().qty_,200);
     EXPECT_EQ(dq.back().price_,300);
@@ -103,18 +103,18 @@ TEST_F(DequeLevelTest,Count)
 
 TEST_F(DequeLevelTest,Depth)
 {
-    dq.append_new(make_show_all_order(1,10));
-    dq.append_new(make_show_all_order(2,11));
-    dq.append_new(make_show_all_order(3,12));
+    dq.append(make_show_all_order(1,10));
+    dq.append(make_show_all_order(2,11));
+    dq.append(make_show_all_order(3,12));
 
     EXPECT_EQ(dq.depth_,33);
 }
 
 TEST_F(DequeLevelTest,PopFront)
 {
-    dq.append_new(make_show_all_order(1,10));
-    dq.append_new(make_show_all_order(2,11));
-    dq.append_new(make_show_all_order(3,12));
+    dq.append(make_show_all_order(1,10));
+    dq.append(make_show_all_order(2,11));
+    dq.append(make_show_all_order(3,12));
 
     EXPECT_EQ(dq.front().id_,1);
     EXPECT_EQ(dq.front().qty_,10);
@@ -126,9 +126,9 @@ TEST_F(DequeLevelTest,PopFront)
 
 TEST_F(DequeLevelTest,CopyToBack)
 {
-    dq.append_new(make_show_all_order(1,10));
-    dq.append_new(make_show_all_order(2,11));
-    dq.append_new(make_show_all_order(3,12));
+    dq.append(make_show_all_order(1,10));
+    dq.append(make_show_all_order(2,11));
+    dq.append(make_show_all_order(3,12));
 
     EXPECT_EQ(dq.front().id_,1);
     EXPECT_EQ(dq.front().qty_,10);
@@ -144,9 +144,9 @@ TEST_F(DequeLevelTest,CopyToBack)
 
 TEST_F(DequeLevelTest, Clear)
 {
-    dq.append_new(make_show_all_order(1,10));
-    dq.append_new(make_show_all_order(2,11));
-    dq.append_new(make_show_all_order(3,12));
+    dq.append(make_show_all_order(1,10));
+    dq.append(make_show_all_order(2,11));
+    dq.append(make_show_all_order(3,12));
 
     EXPECT_EQ(dq.front().id_,1);
     EXPECT_EQ(dq.front().qty_,10);
@@ -157,9 +157,9 @@ TEST_F(DequeLevelTest, Clear)
 
 TEST_F(DequeLevelTest,BeginEnd)
 {
-    dq.append_new(make_show_all_order(1,10));
-    dq.append_new(make_show_all_order(2,11));
-    dq.append_new(make_show_all_order(3,12));
+    dq.append(make_show_all_order(1,10));
+    dq.append(make_show_all_order(2,11));
+    dq.append(make_show_all_order(3,12));
 
     EXPECT_EQ(dq.begin()->id_,1);
     EXPECT_EQ((dq.end()-1)->id_,3);
@@ -177,9 +177,9 @@ TEST_F(DequeLevelTest,Find)
 
 TEST_F(DequeLevelTest,Remove)
 {
-    dq.append_new(make_show_all_order(1,10));
-    dq.append_new(make_show_all_order(2,11));
-    dq.append_new(make_show_all_order(3,12));
+    dq.append(make_show_all_order(1,10));
+    dq.append(make_show_all_order(2,11));
+    dq.append(make_show_all_order(3,12));
 
     EXPECT_EQ(dq.count(),3);
     EXPECT_EQ((dq.begin()+1)->id_,2);

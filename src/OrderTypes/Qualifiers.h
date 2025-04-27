@@ -7,6 +7,8 @@
 
 #include <string>
 
+// should namespace this
+
 using ID = unsigned int;
 enum class OrderState : short
 {

@@ -1,19 +1,20 @@
 #include <iostream>
 #include <variant>
-#include <algorithm>
-
-#include "DequeLevel.h"
-#include "Printer.h"
-#include "OrderTypes/SubmittedOrderTypes.h"
-#include "OrderQueue/OrderQueue.h"
-#include "Matchers/FIFO/FifoMatchingStrategy.h"
-#include "Orderbook/Orderbook.h"
 
 #include "Instrument/Instrument.h"
+#include "OrderTypes/SubmittedOrderTypes.h"
+#include "Levels/DequeLevel/DequeLevel.h"
+#include "DOMS/MidLadder/MidLadder.h"
+#include "Matchers/FIFO/FifoStrategy.h"
+#include "Orderbook/Orderbook.h"
+#include "Printer/Printer.h"
 #include "Generators/OrderFactories.h"
 
 
-using Fifo = FifoMatchingStrategy<MidLadder<Order,DequeLevel>>;
+
+using Dom = MidLadder<DequeLevel>;
+using Fifo = FifoStrategy<Dom>;
+
 void spcr()
 {
     std::cout<<"======================="<<std::endl;
@@ -28,18 +29,13 @@ int main()
 {
     Print print;
 
-
-
-    auto instrument = std::make_shared<Instrument>
-    ("Instr",1,100,1,50,51 );
+    std::shared_ptr<Instrument> instrument = std::make_shared<Instrument>
+    ("Instr",0,500,1,50,51 );
 
     Fifo fifo;
-    Orderbook<Fifo> ob(instrument,fifo);
-    //Q q{};
+    Orderbook<Dom,Fifo> ob(instrument, fifo);
 
-
-
-    gen::GenerateOrderBook(55,56,ob,{5,4,3,2});
+    gen::GenerateOrderBook(50,51,ob,{5,4,3,2});
     print.ob_all(ob);
 
 
@@ -53,9 +49,12 @@ int main()
     lb();
     print.ob_all(ob);
 
+
+
     lb();
     print.submitted_order(sell_limit.order.id_, instrument);
     lb();
+
 
 
 
@@ -73,6 +72,13 @@ int main()
 
     //print.all_submitted(instrument);
 
+    auto res = instrument->order_records_.get_order(bm.order.id_);
+
+    if (const SubmittedBuyMarket<Order>* ord = std::get_if<SubmittedBuyMarket<Order>>(&res))
+    {
+        print(bm.order.id_,"Placed id: ");
+        std::cout<<"Retrieved id: " << ord->order.id_<<std::endl;
+    }
 
 
 

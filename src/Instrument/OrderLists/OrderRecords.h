@@ -26,7 +26,7 @@ class OrderRecords {
 
     void print_order(const ID id) { std::visit([&](auto& o){o.print();},orders[find_by_id(id)]); }
 
-    ClientOrder get_order(const ID id) { return orders[find_by_id(id)]; }
+    auto get_order(const ID id) { return orders[find_by_id(id)]; }
 
     double get_price(const ID id)
     {
