@@ -4,9 +4,8 @@ project(OrderBook)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(odb UnitTests/OrderBookAndRecordsTest.cpp)
+add_executable(odb UnitTests/FifoTests.cpp)
 #
-
 
 find_package(GTest CONFIG REQUIRED)
 target_link_libraries(odb PUBLIC GTest::gtest GTest::gtest_main)

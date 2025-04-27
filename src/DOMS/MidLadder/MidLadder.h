@@ -9,14 +9,14 @@
 
 
 #include "../../Levels/LevelRequirements.h"
+#include "../../DOMS/DomRequirements.h"
 
 template<Is_Level Level>
 class MidLadder {
 
-    template<typename U>
+    template<Is_Dom U>
     friend class FifoStrategy;
 
-    //using Level = Lev<Order>;
     using Dom = std::vector<Level>;
     using DomIter = typename std::vector<Level>::iterator;
 

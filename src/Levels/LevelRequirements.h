@@ -6,9 +6,9 @@
 #define LEVELREQUIREMENTS_H
 
 template<typename L>
-concept Is_Level = requires(L lvl)
+concept Is_Level = requires(L lvl, size_t idx)
 {
-    lvl.depth_;
+    lvl.depth();
     lvl.count();
 
     lvl.begin();
@@ -17,12 +17,12 @@ concept Is_Level = requires(L lvl)
     lvl.front();
     lvl.back();
 
-   // lvl.append_new();
+   // lvl.append();
     lvl.pop_front();
 
     lvl.clear();
-    //lvl.remove();
-    //lvl.find();
+    lvl.remove(idx);
+    lvl.find(idx);
 
 };
 
