@@ -1,0 +1,120 @@
+//
+// Created by prw on 8/12/25.
+//
+//
+// Created by prw on 7/28/25.
+//
+
+#include "Fifo.h"
+#include <vector>
+#include <deque>
+
+using namespace order;
+
+OrderFills Fifo::match(BuyMarket o) { return market(o,std::plus<>()); };
+OrderFills Fifo::match(SellMarket o) { return market(o,std::minus<>()); }
+StateUpdate Fifo::match(BuyLimit o) { return limit(Limit(o));}
+StateUpdate Fifo::match(SellLimit o) { return limit(Limit(o));}
+
+const Level& Fifo::level(const size_t idx) const { return level_[idx]; }
+
+
+
+StateUpdate Fifo::match(Cancel o)
+{
+    level_[o.price].depth -= o.qty;
+    std::erase_if(level_[o.price].orders,[&](const Limit& ord){ return ord.id == o.id; });
+    return StateUpdate{o.id,OrderState::CANCELLED};
+};
+
+StateUpdate Fifo::limit(auto o)
+{
+    // Limit orders are just placed into the level
+    level_[o.price].orders.emplace_back(o);
+    level_[o.price].depth += o.qty;
+    return StateUpdate{o.id,OrderState::ACCEPTED};
+
+}
+
+OrderFills Fifo::market(auto o, auto&& dir)
+{
+    OrderFills fills;
+    fills.market_fill.id = o.id;
+    fills.market_fill.qty = o.qty;
+
+
+    // Market order takes all the available liquidity at current the level at once
+    for (;o.qty > level_[o.price].depth; o.price = dir(o.price,1))
+    {
+        fills.market_fill.fills.emplace_back(o.price,level_[o.price].depth);
+        o.qty -= level_[o.price].depth;
+        fill_level(o, fills);
+    }
+
+    // Remaining orders are filled at the current price
+    fills.market_fill.fills.emplace_back(o.price,o.qty);
+
+    // take orders in full
+    while (!level_[o.price].orders.empty() && o.qty > level_[o.price].orders.front().qty)
+    {
+        o.qty -=  level_[o.price].orders.front().qty;
+        fill_orders(o, fills);
+    }
+
+    // take partial order
+    if (o.qty)
+    {
+        fill_remaining(o, fills);
+    }
+
+    return std::move(fills);
+}
+
+
+int Fifo::fill_level(auto& o, OrderFills& fills)
+{
+    level_[o.price].depth = 0;
+
+    for (;!level_[o.price].orders.empty(); level_[o.price].orders.pop_front())
+    {
+        fills.limit_fills.push_back(level_[o.price].orders.front().id);
+    }
+
+    return 1;
+}
+
+int Fifo::fill_orders(auto& o, OrderFills& fills)
+{
+
+    level_[o.price].depth -= level_[o.price].orders.front().qty;
+
+    fills.limit_fills.push_back(level_[o.price].orders.front().id);
+    level_[o.price].orders.pop_front();
+
+    return 1;
+}
+
+int Fifo::fill_remaining(auto& o, OrderFills& fills)
+{
+    level_[o.price].depth -= o.qty;
+    level_[o.price].orders.front().qty -= o.qty;
+
+    if (level_[o.price].orders.front().qty) // last limit order partially filled
+    {
+        fills.partial_fill.id = level_[o.price].orders.front().id;
+        fills.partial_fill.qty = o.qty;
+
+    }
+    else // last limit order fully filled
+    {
+        fills.limit_fills.push_back(level_[o.price].orders.front().id);
+        level_[o.price].orders.pop_front();
+
+    }
+
+    o.qty = 0;
+    return 1;
+}
+
+
+
