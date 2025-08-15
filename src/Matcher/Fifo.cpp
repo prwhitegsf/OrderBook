@@ -11,8 +11,11 @@
 
 using namespace order;
 
-OrderFills Fifo::match(BuyMarket o) { return market(o,std::plus<>()); };
-OrderFills Fifo::match(SellMarket o) { return market(o,std::minus<>()); }
+
+//OrderFills Fifo::match(BuyMarket o) { return market(o,std::plus<>()); };
+//OrderFills Fifo::match(SellMarket o) { return market(o,std::minus<>()); }
+OrderFills Fifo::match(BuyMarket o) { return std::move(market(o,std::plus<>())); };
+OrderFills Fifo::match(SellMarket o) { return std::move(market(o,std::minus<>())); }
 StateUpdate Fifo::match(BuyLimit o) { return limit(Limit(o));}
 StateUpdate Fifo::match(SellLimit o) { return limit(Limit(o));}
 
@@ -69,6 +72,10 @@ OrderFills Fifo::market(auto o, auto&& dir)
         fill_remaining(o, fills);
     }
 
+    //std::copy(filled_limit_orders_.begin(), filled_limit_orders_.end(), std::back_inserter(fills.limit_fills));
+    //fills.limit_fills = filled_limit_orders_;
+    //std::ranges::fill(filled_limit_orders_,0);
+
     return std::move(fills);
 }
 
@@ -77,10 +84,12 @@ int Fifo::fill_level(auto& o, OrderFills& fills)
 {
     level_[o.price].depth = 0;
 
-    for (;!level_[o.price].orders.empty(); level_[o.price].orders.pop_front())
-    {
-        fills.limit_fills.push_back(level_[o.price].orders.front().id);
-    }
+   // fills.limit_fills.reserve(fills.limit_fills.size() + level_[o.price].orders.size());
+    for (auto& ord : level_[o.price].orders)
+        fills.limit_fills.push_back(ord.id);
+
+    level_[o.price].orders.clear();
+
 
     return 1;
 }
@@ -89,7 +98,11 @@ int Fifo::fill_orders(auto& o, OrderFills& fills)
 {
 
     level_[o.price].depth -= level_[o.price].orders.front().qty;
+    int flo_idx{};
+    while (filled_limit_orders_[flo_idx] != 0)
+        ++flo_idx;
 
+    //filled_limit_orders_[flo_idx] = level_[o.price].orders.front().id;
     fills.limit_fills.push_back(level_[o.price].orders.front().id);
     level_[o.price].orders.pop_front();
 
@@ -109,6 +122,8 @@ int Fifo::fill_remaining(auto& o, OrderFills& fills)
     }
     else // last limit order fully filled
     {
+
+
         fills.limit_fills.push_back(level_[o.price].orders.front().id);
         level_[o.price].orders.pop_front();
 

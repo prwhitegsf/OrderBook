@@ -24,7 +24,7 @@ namespace order
     {
         ID id{};
         float fill_price{};
-        std::vector<std::pair<Price,Qty>> fills;
+        //std::vector<std::pair<Price,Qty>> fills;
         Qty qty{};
 
     };

@@ -10,11 +10,17 @@
 #include "Record.h"
 
 
+void accept_and_match(auto& order_book)
+{
 
+    order_book.accept_order();
+    order_book.match_order();
+
+}
 int main()
 {
 
-    constexpr size_t iterations{10000}; // number of trades to simulate after initialization
+    constexpr size_t iterations{100000}; // number of trades to simulate after initialization
     constexpr size_t dom_window{5}; // number of prices on either side of bid/ask to display depth for
     constexpr size_t wait{0}; // pause (in ms) between trades
 
@@ -29,14 +35,13 @@ int main()
     {
         order_book.submit_order(
             order_gen.record_order(order_gen.make_random_order(order_book,record_depot,50)));
-        order_book.accept_order();
-        order_book.match_order();
 
+        accept_and_match(order_book);
         record_depot.record_processed_orders(std::move(order_book.get_processed_orders()));
         record_depot.update_order_records();
 
 
-        printer::print_trade_records(record_depot);
+      //  printer::print_trade_records(record_depot);
    //     printer::print_bid_ask(std::cout,order_book);
      //   printer::print_dom(std::cout,order_book,dom_window);
 
@@ -48,7 +53,7 @@ int main()
        // std::this_thread::sleep_for(std::chrono::milliseconds(wait));
     }
 
-    order_gen.write_recorded_to_csv();
+    /*order_gen.write_recorded_to_csv();
     order_gen.read_recorded_orders_from_csv();
 
     std::cout<<order_gen.order_playback_q.size()<<std::endl;
@@ -62,7 +67,7 @@ int main()
         }, order_gen.order_playback_q.front());
 
         order_gen.order_playback_q.pop();
-    }
+    }*/
 
     /*printer::print_accepted_orders(record_depot);
     printer::print_completed_orders(record_depot);*/

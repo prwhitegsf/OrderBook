@@ -28,7 +28,7 @@ class Fifo {
 
 public:
     Fifo() = delete;
-    explicit Fifo(const int num_prices) : level_(num_prices){}
+    explicit Fifo(const int num_prices) : level_(num_prices), filled_limit_orders_(100){}
 
     order::OrderFills match(order::BuyMarket o);
     order::OrderFills match(order::SellMarket o);
@@ -42,6 +42,9 @@ public:
 
 
 private:
+
+    std::vector<ID> filled_limit_orders_;
+
     std::vector<Level> level_;
     order::StateUpdate limit(auto o);
     order::OrderFills market(auto o, auto&& dir);

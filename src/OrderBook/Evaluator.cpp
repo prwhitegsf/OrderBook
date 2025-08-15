@@ -25,7 +25,16 @@ void Evaluator::evaluate_order(order::BuyLimit o) const {
     }
     else // rejection
     {
-        state_update_q_.emplace_back(o.id,order::OrderState::REJECTED);
+        for (auto su : state_update_q_)
+        {
+            if (su.id == 0)
+            {
+                su = order::StateUpdate(o.id,order::OrderState::REJECTED);
+                break;
+            }
+        }
+        //state_update_q_.back()=order::StateUpdate(o.id,order::OrderState::REJECTED);
+        //state_update_q_.emplace_back(o.id,order::OrderState::REJECTED);
     }
 
 }
@@ -84,7 +93,16 @@ void Evaluator::evaluate_order(order::BuyLimit o) const {
     }
     else // rejected
     {
-        state_update_q_.emplace_back(o.id,order::OrderState::REJECTED);
+        for (auto su : state_update_q_)
+        {
+            if (su.id == 0)
+            {
+                su = order::StateUpdate(o.id,order::OrderState::REJECTED);
+                break;
+            }
+        }
+        //state_update_q_.back()=order::StateUpdate(o.id,order::OrderState::REJECTED);
+        //state_update_q_.emplace_back(o.id,order::OrderState::REJECTED);
     }
 }
 

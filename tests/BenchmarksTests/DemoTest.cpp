@@ -77,7 +77,7 @@ BENCHMARK_DEFINE_F(FifoBench, matcherTest)(benchmark::State &state)
 
             order_book.pending_q_.pop();
 
-            auto x = std::move(order_book.get_processed_orders());
+           // auto x = std::move(order_book.get_processed_orders());
         }
         else
         {
