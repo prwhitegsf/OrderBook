@@ -46,13 +46,15 @@ OrderFills Fifo::market(auto o, auto&& dir)
     // Market order takes all the available liquidity at current the level at once
     for (;o.qty > level_[o.price].depth; o.price = dir(o.price,1))
     {
-        fills.market_fill.fills.emplace_back(o.price,level_[o.price].depth);
+        //fills.market_fill.fills.emplace_back(o.price,level_[o.price].depth);
+        fills.market_fill.fill_price += o.price * (level_[o.price].depth/static_cast<float>(fills.market_fill.qty));
         o.qty -= level_[o.price].depth;
         fill_level(o, fills);
     }
 
     // Remaining orders are filled at the current price
-    fills.market_fill.fills.emplace_back(o.price,o.qty);
+    fills.market_fill.fill_price += fills.market_fill.fill_price == 0 ? o.price : o.price * (o.qty/static_cast<float>(fills.market_fill.qty));
+     //fills.market_fill.fills.emplace_back(o.price,o.qty);
 
     // take orders in full
     while (!level_[o.price].orders.empty() && o.qty > level_[o.price].orders.front().qty)

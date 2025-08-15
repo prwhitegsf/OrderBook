@@ -34,7 +34,7 @@ double avg_per_trade(size_t runs, size_t iterations)
             start = std::chrono::high_resolution_clock::now();
             order_book.match_order();
             end = std::chrono::high_resolution_clock::now();
-            times.push_back(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
+            times.push_back(std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count());
 
             record_depot.record_processed_orders(std::move(order_book.get_processed_orders()));
             record_depot.update_order_records();
@@ -84,20 +84,9 @@ double avg_to_clear_q(size_t runs, size_t iterations)
 
         }
         start = std::chrono::high_resolution_clock::now();
-  //      order_book.match_order();
+        order_book.match_order();
 
-        while (!order_book.pending_q_.empty())
-        {
-            std::visit([&](auto&& o)
-              {
-                  order_book.push_matched(order_book.matcher_.match(o));
 
-              },order_book.pending_q_.front());
-
-            order_book.pending_q_.pop();
-
-            auto x = std::move(order_book.get_processed_orders());
-        }
 
         end = std::chrono::high_resolution_clock::now();
         times.push_back(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
@@ -114,13 +103,13 @@ double avg_to_clear_q(size_t runs, size_t iterations)
 int main(){
 
 
-    size_t runs{1000}, iterations{1000};
+    size_t runs{10}, iterations{100000};
     auto per_trade = avg_per_trade(runs,iterations);
-    auto clear_q = avg_to_clear_q(runs,iterations);
+    //auto clear_q = avg_to_clear_q(runs,iterations);
 
     std::cout<<"us / trade: "<<per_trade<<std::endl;;
-    std::cout<<"us to clear 10000: "<<clear_q<<std::endl;;
-    std::cout<<"clear_q/per_trade: "<<clear_q/per_trade<<std::endl;;
+   // std::cout<<"us to clear 10000: "<<clear_q<<std::endl;;
+   // std::cout<<"clear_q/per_trade: "<<clear_q/per_trade<<std::endl;;
 
     return 0;
 

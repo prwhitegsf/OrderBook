@@ -23,6 +23,7 @@ namespace order
     struct MarketFill
     {
         ID id{};
+        float fill_price{};
         std::vector<std::pair<Price,Qty>> fills;
         Qty qty{};
 
