@@ -151,7 +151,7 @@ namespace gen
             track_min_and_max_prices(ob);
             ++submitted_stats["total"];
             const Price mid = ob.mid();
-            const Price price = generate_price(ob);
+            const Price price = reactive_price_generation(ob);
             const ID id = next_seq_id();
 
             size_t margin=ob.num_prices()/10;

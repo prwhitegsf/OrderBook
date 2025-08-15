@@ -118,6 +118,17 @@ public:
         return matcher_.level(idx).count();
     }
 
+    void match()
+    {
+        if (pending_q_.empty()) return;
+        std::visit([this](auto&& o)
+       {
+           push_matched(matcher_.match(o));
+
+       },pending_q_.front());
+
+        pending_q_.pop();
+    }
 
     void push_matched(order::OrderFills&& fills);
     void push_matched(order::StateUpdate&& updates);

@@ -1,5 +1,6 @@
 //#include <iostream>
 
+#include <algorithm>
 #include <ranges>
 
 #include "Printer.h"
@@ -53,6 +54,27 @@ int main()
        // std::this_thread::sleep_for(std::chrono::milliseconds(wait));
     }
 
+    for (int i{}; i < order_book.num_prices()-1; ++i)
+    {
+        std::cout<<i<<' '<<order_book.depth(i)<<' '<<order_book.count(i)<<std::endl;
+    }
+    std::cout<<std::endl;
+    /*for (auto& c : order_book.order_counts())
+        std::cout<<c<<' '<<std::endl;*/
+    //printer::print_dom(std::cout,order_book,dom_window);
+    /*printer::print_accepted_orders(record_depot);
+    printer::print_completed_orders(record_depot);
+    */
+
+
+    printer::print_dom(std::cout,order_book,23);
+    auto key_view = order_gen.submitted_stats | std::views::keys;
+    std::vector<std::string> sorted_keys;
+    std::ranges::copy(key_view, std::back_inserter(sorted_keys));
+    std::ranges::sort(sorted_keys);
+
+    for (auto& k : sorted_keys)
+        std::cout<<k<<' '<< order_gen.submitted_stats.at(k)<<std::endl;
     /*order_gen.write_recorded_to_csv();
     order_gen.read_recorded_orders_from_csv();
 
