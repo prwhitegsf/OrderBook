@@ -43,13 +43,13 @@ class OrderBook {
 
     Instrument inst_;
     Price num_prices_;
-    Matcher matcher_;
+
 
     Dom d_;
     Evaluator evaluator_;
 
     std::queue<order::Submitted> submitted_q_;
-    std::queue<order::Pending> pending_q_;
+    //std::queue<order::Pending> pending_q_;
 
     std::vector<order::OrderFills> order_fills_;
     std::vector<order::StateUpdate> order_states_;
@@ -57,6 +57,8 @@ class OrderBook {
 
 
 public:
+    Matcher matcher_;
+    std::queue<order::Pending> pending_q_;
     explicit OrderBook(const Instrument& inst)
     :   inst_(inst), num_prices_(inst_.num_prices_), matcher_(num_prices_),
         d_(num_prices_, inst_.starting_ask_, inst_.starting_bid_,inst_.protection_),
@@ -109,10 +111,12 @@ public:
     /// @return a vector containing the number of orders at each price
     std::vector<int> order_counts();
 
-private:
+
 
     void push_matched(order::OrderFills&& fills);
     void push_matched(order::StateUpdate&& updates);
+
+private:
 
 };
 

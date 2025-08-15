@@ -69,14 +69,16 @@ namespace gen
         order::Submitted o{};
         const unsigned short type = uniform(0,10);
 
+
+        rd.make_order_record(o);
         if (binomial(0.5)) // randomly check if we need to backfill
         {
             o = backfill(ob, id, max_qty);
         }
-        else if (type <=1 )
+        /*else if (type <=1 )
         {
             o = make_cancel_order(rd);
-        }
+        }*/
         else if (type <= 5)
         {
             if (price >= mid)
@@ -100,8 +102,6 @@ namespace gen
                 o = make_limit_order<order::SellLimit>(id, max_qty,price);
             }
         }
-
-        rd.make_order_record(o);
 
         return o;
     }

@@ -14,6 +14,7 @@
 #define ORDERGENERATORS_H
 
 #include <random>
+#include <fstream>
 
 
 
@@ -39,6 +40,8 @@ namespace gen
     public:
         std::queue<order::Submitted> orders_q;
         std::queue<order::Submitted> recorded_orders;
+        std::queue<order::Submitted> order_playback_q;
+
 
         std::unordered_map<std::string, int> submitted_stats;
 
@@ -49,6 +52,81 @@ namespace gen
         void initialize_orderbook(OrderBook<Fifo>& ob,RecordDepot<order::Record>& rd, Qty initial_order_count, Qty max_qty);
         order::Submitted record_order(order::Submitted&& o);
         order::Submitted make_random_order(OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd, Qty max_qty=10, float sweep_chance =0.1);
+
+        void write_recorded_to_csv()
+        {
+            std::ofstream orders;
+            orders.open("../data/orders.csv");
+            while (!recorded_orders.empty())
+            {
+
+                std::visit([&](auto& ord)
+                {
+                        orders<<order::order_types[std::type_index(typeid(ord))]<<"," << ord.id<<","<<ord.qty<<","<<ord.price<<"\n";
+
+                }, recorded_orders.front());
+
+                recorded_orders.pop();
+            }
+            orders.close();
+        }
+
+        void read_recorded_orders_from_csv()
+        {
+            std::ifstream file("../data/orders.csv");
+
+            if (!file.is_open())
+            {
+                std::cerr << "Error opening file!"<<std::endl;
+                return;
+            }
+
+            std::string line;
+            std::vector<std::vector<std::string>> data; // To store all rows and columns
+
+            while (std::getline(file, line)) { // Read line by line
+                std::stringstream ss(line);  // Create a stringstream from the line
+                std::string cell;
+                std::vector<std::string> order_string; // To store cells of the current row
+
+                while (std::getline(ss, cell, ',')) { // Extract cells separated by comma
+                    order_string.push_back(cell);
+                }
+                data.push_back(order_string); // Add the parsed row to the data vector
+            }
+
+            for (auto& order : data)
+            {
+                auto type = order.front();
+                ID id = std::stoi(order[1]);
+                Qty qty = std::stoi(order[2]);
+                Price price = std::stoi(order[3]);
+                if (type == "BuyLimit")
+                {
+                    order_playback_q.emplace(order::BuyLimit(id, qty,price));
+                }
+                else if (type == "SellLimit")
+                {
+                    order_playback_q.emplace(order::SellLimit(id, qty,price));
+                }
+                else if (type == "BuyMarket")
+                {
+                    order_playback_q.emplace(order::BuyMarket(id, qty,price));
+                }
+                else if (type == "SellMarket")
+                {
+                    order_playback_q.emplace(order::SellMarket(id, qty,price));
+                }
+                else if (type == "Cancel")
+                {
+                    order_playback_q.emplace(order::Cancel(id, qty,price));
+                }
+
+
+            }
+
+
+        }
 
     private:
 
