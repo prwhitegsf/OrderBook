@@ -34,7 +34,7 @@ int main()
     for (int i{}; i < iterations; ++i)
     {
         order_book.submit_order(
-            order_gen.record_order(order_gen.make_random_order(order_book,record_depot,50)));
+            order_gen.record_order(order_gen.make_pending_order(order_book,record_depot,50)));
 
         accept_and_match(order_book);
         record_depot.record_processed_orders(std::move(order_book.get_processed_orders()));

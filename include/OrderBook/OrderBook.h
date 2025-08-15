@@ -113,6 +113,10 @@ public:
     /// @return a vector containing the number of orders at each price
     std::vector<int> order_counts();
 
+    [[nodiscard]] Qty count(Price idx) const
+    {
+        return matcher_.level(idx).count();
+    }
 
 
     void push_matched(order::OrderFills&& fills);
