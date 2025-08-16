@@ -54,6 +54,7 @@ private:
     int fill_level(auto& o, order::OrderFills& fills);
     int fill_orders(auto& o, order::OrderFills& fills);
     int fill_remaining(auto& o, order::OrderFills& fills);
+    static float fill_price(Price price, Qty filled_qty, Qty full_qty);
 };
 
 

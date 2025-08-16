@@ -21,6 +21,9 @@ StateUpdate Fifo::match(SellLimit o) { return limit(Limit(o));}
 
 const Level& Fifo::level(const size_t idx) const { return level_[idx]; }
 
+float Fifo::fill_price(Price price, Qty filled_qty, Qty full_qty) {
+    return price * (filled_qty / static_cast<float>(full_qty));
+}
 
 
 StateUpdate Fifo::match(Cancel o)
@@ -51,16 +54,16 @@ OrderFills Fifo::market_limit(auto o, auto&& dir)
     // Market order takes all the available liquidity at current the level at once
     for (;o.qty > level_[o.price].depth; o.price = dir(o.price,1))
     {
-
-        fills.market_fill.fill_price += o.price * (level_[o.price].depth/static_cast<float>(o.full_qty));
+        fills.market_fill.fill_price +=
+            fill_price(o.price,level_[o.price].depth,o.full_qty);
         o.qty -= level_[o.price].depth;
         fill_level(o, fills);
     }
 
     // Remaining orders are filled at the current price
-    Qty remain = o.qty + (o.full_qty-fills.market_fill.qty);
-    fills.market_fill.fill_price += fills.market_fill.fill_price == 0 ? o.price : o.price * (remain/static_cast<float>(o.full_qty));
-
+    fills.market_fill.fill_price +=
+        fills.market_fill.fill_price == 0 ? o.price :
+        fill_price(o.price,o.qty + (o.full_qty-fills.market_fill.qty),o.full_qty);
 
     // take orders in full
     while (!level_[o.price].orders.empty() && o.qty > level_[o.price].orders.front().qty)
@@ -88,13 +91,17 @@ OrderFills Fifo::market(auto o, auto&& dir)
     // Market order takes all the available liquidity at current the level at once
     for (;o.qty > level_[o.price].depth; o.price = dir(o.price,1))
     {
-        fills.market_fill.fill_price += o.price * (level_[o.price].depth/static_cast<float>(fills.market_fill.qty));
+        fills.market_fill.fill_price +=
+            fill_price(o.price,level_[o.price].depth,fills.market_fill.qty);
+        //fills.market_fill.fill_price += o.price * (level_[o.price].depth/static_cast<float>(fills.market_fill.qty));
         o.qty -= level_[o.price].depth;
         fill_level(o, fills);
     }
 
     // Remaining orders are filled at the current price
-    fills.market_fill.fill_price += fills.market_fill.fill_price == 0 ? o.price : o.price * (o.qty/static_cast<float>(fills.market_fill.qty));
+    fills.market_fill.fill_price +=
+        fills.market_fill.fill_price == 0 ? o.price :
+        fill_price(o.price,level_[o.price].depth,fills.market_fill.qty);
 
 
     // take orders in full
