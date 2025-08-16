@@ -109,6 +109,10 @@ public:
     /// @return a vector containing the number of orders at each price
     std::vector<int> order_counts();
 
+    [[nodiscard]] Qty count(Price idx) const;
+
+    void match(auto&& order);
+
 private:
 
     void push_matched(order::OrderFills&& fills);
@@ -146,13 +150,9 @@ void OrderBook<Matcher>::match_order()
 {
     while (!pending_q_.empty())
     {
-        std::visit([this](auto&& o)
-        {
-            push_matched(matcher_.match(o));
-
-        },pending_q_.front());
-
+        match(pending_q_.front());
         pending_q_.pop();
+
     }
 }
 
@@ -233,6 +233,20 @@ std::vector<int> OrderBook<Matcher>::order_counts() {
         result.push_back(matcher_.level(i).count());
 
     return result;
+}
+
+template <Is_Matcher Matcher>
+Qty OrderBook<Matcher>::count(Price idx) const {
+    return matcher_.level(idx).count();
+}
+
+template <Is_Matcher Matcher>
+void OrderBook<Matcher>::match(auto&& order) {
+    std::visit([this](auto&& o)
+    {
+        push_matched(matcher_.match(o));
+
+    },order);
 }
 
 
