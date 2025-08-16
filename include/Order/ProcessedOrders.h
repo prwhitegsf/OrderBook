@@ -28,7 +28,6 @@ namespace order
 
     };
 
-
     struct OrderFills
     {
         std::vector<ID> limit_fills;

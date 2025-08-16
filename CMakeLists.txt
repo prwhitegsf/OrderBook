@@ -4,6 +4,7 @@ project(OrderBook)
 set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 
 
 set(SOURCE
@@ -28,7 +29,19 @@ set(INCLUDE
 
 add_executable(demo demo.cpp ${SOURCE})
 target_include_directories(demo PUBLIC ${INCLUDE} "${PROJECT_SOURCE_DIR}/include/Printer" )
-##
+
+
+add_executable(benchmarks tests/PerformanceTests/BenchmarkTests/FifoBenchTest.cpp ${SOURCE})
+target_include_directories(demo PUBLIC ${INCLUDE} "${PROJECT_SOURCE_DIR}/include/Printer" )
+
+
+find_package(benchmark CONFIG REQUIRED)
+target_link_libraries(benchmarks PRIVATE benchmark::benchmark benchmark::benchmark_main)
+
+
+
+
+
 
 set(TESTS
     tests/UnitTests/FifoTests.cpp
