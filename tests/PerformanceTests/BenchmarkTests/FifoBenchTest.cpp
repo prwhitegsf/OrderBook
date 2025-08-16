@@ -14,7 +14,7 @@
 class FifoBenchTest : public benchmark::Fixture
 {
 public:
-    size_t iterations{1000000};
+    size_t iterations{10000000};
     OrderBook<Fifo> order_book;
     RecordDepot<order::Record> record_depot;
     std::queue<order::Pending> pq;

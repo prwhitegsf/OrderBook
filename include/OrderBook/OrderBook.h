@@ -60,10 +60,12 @@ public:
     explicit OrderBook(const Instrument& inst)
     :   inst_(inst), num_prices_(inst_.num_prices_), matcher_(num_prices_),
         d_(num_prices_, inst_.starting_ask_, inst_.starting_bid_,inst_.protection_),
+        order_fills_(1),order_states_(1), // temp fix while designing RingBuffer
         evaluator_(d_,pending_q_,order_states_){}
 
     explicit OrderBook(Instrument&& inst)
     :   inst_(std::move(inst)), num_prices_(inst_.num_prices_), matcher_(num_prices_),
+        order_fills_(1),order_states_(1),// temp fix while designing RingBuffer
         d_(num_prices_, inst_.starting_ask_, inst_.starting_bid_,inst_.protection_),
         evaluator_(d_,pending_q_,order_states_){}
 
@@ -169,20 +171,25 @@ void OrderBook<Matcher>::match_order()
 template <Is_Matcher Matcher>
 order::Processed OrderBook<Matcher>::get_processed_orders()
 {
-    return std::move(std::make_pair(std::move(order_fills_), std::move(order_states_)));
+    return std::move(std::make_pair(order_fills_, order_states_));
+
 }
 
 
 template <Is_Matcher Matcher>
 void OrderBook<Matcher>::push_matched(order::OrderFills&& fills)
 {
-    order_fills_.emplace_back(fills);
+    // temp fix while designing RingBuffer
+    order_fills_.back() = std::move(fills);
+
 }
 
 template <Is_Matcher Matcher>
 void OrderBook<Matcher>::push_matched(order::StateUpdate&& updates)
 {
-    order_states_.emplace_back(updates);
+    // temp fix while designing RingBuffer
+    order_states_.back() = std::move(updates);
+
 }
 
 
