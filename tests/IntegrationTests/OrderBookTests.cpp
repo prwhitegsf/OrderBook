@@ -151,7 +151,6 @@ TEST_F(OrderBookTest, SellMarket)
 
 TEST_F(OrderBookTest, BuyMarketToBuyMarketLimit)
 {
-
     // make sell orders to buy
     process_order(SellLimit(42,5,50));
     process_order(SellLimit(43,5,51));
@@ -161,9 +160,9 @@ TEST_F(OrderBookTest, BuyMarketToBuyMarketLimit)
     EXPECT_EQ(ob.depth(51),5);
     EXPECT_EQ(ob.depth(52),5);
 
-    process_order(BuyMarket(45,18,51));
+    process_order(BuyMarket(45,20,51));
     EXPECT_EQ(ob.depth(50),0); // took all orders at 50
-    EXPECT_EQ(ob.depth(51),8); // take all at 51, then place buy limit for remaining
+    EXPECT_EQ(ob.depth(51),10); // take all at 51, then place buy limit for remaining
     EXPECT_EQ(ob.depth(52),5); // no executions, 52 > limit price
 
     // has the sell order at 52 and remaining buy limit at 51
@@ -173,32 +172,35 @@ TEST_F(OrderBookTest, BuyMarketToBuyMarketLimit)
     EXPECT_EQ(rd.accepted().at(44).states.back(),OrderState::ACCEPTED); //still there
 
     // market order is now a partially filled limit order
-    EXPECT_EQ(rd.accepted().at(45).quantities.back(),8);
+    EXPECT_EQ(rd.accepted().at(45).quantities.back(),10);
     EXPECT_EQ(rd.accepted().at(45).states.back(),OrderState::PARTIAL);
     EXPECT_EQ(rd.accepted().at(45).type,"BuyMarketLimit");
+    EXPECT_EQ(rd.accepted().at(45).filled_price,50.75); // fill 5 @50 and 15 @51
 
     // Filled limit orders are in executions
     EXPECT_EQ(rd.completed().size(),2);
     EXPECT_EQ(rd.completed().at(42).quantities.back(),0);
     EXPECT_EQ(rd.completed().at(42).states.back(),OrderState::FILLED);
+    EXPECT_EQ(rd.completed().at(42).filled_price,50);
 
     EXPECT_EQ(rd.completed().at(43).quantities.back(),0);
     EXPECT_EQ(rd.completed().at(43).states.back(),OrderState::FILLED);
+    EXPECT_EQ(rd.completed().at(43).filled_price,51);
 
     //Now fill the remainder
-    process_order(SellMarket(48,8,49));
+    process_order(SellMarket(48,10,49));
     EXPECT_EQ(rd.completed().size(),4);
     EXPECT_EQ(rd.accepted().size(),1);
     EXPECT_EQ(rd.completed().at(45).quantities.back(),0);
     EXPECT_EQ(rd.completed().at(45).states.back(),OrderState::FILLED);
     EXPECT_EQ(rd.completed().at(45).type,"BuyMarketLimit");
+    EXPECT_EQ(rd.completed().at(45).filled_price,50.75); // fill 5 @50 and 15 @51
 
 }
 
 TEST_F(OrderBookTest, SellMarketToSellMarketLimit)
 {
-
-    // make sell orders to buy
+    // make buy orders to sell into
     process_order(BuyLimit(42,5,49));
     process_order(BuyLimit(43,5,48));
     process_order(BuyLimit(44,5,47));
@@ -207,9 +209,9 @@ TEST_F(OrderBookTest, SellMarketToSellMarketLimit)
     EXPECT_EQ(ob.depth(48),5);
     EXPECT_EQ(ob.depth(47),5);
 
-    process_order(SellMarket(45,18,48));
+    process_order(SellMarket(45,20,48));
     EXPECT_EQ(ob.depth(49),0); // took all orders
-    EXPECT_EQ(ob.depth(48),8); // take all, then place buy limit for remaining
+    EXPECT_EQ(ob.depth(48),10); // take all, then place sell limit for remaining
     EXPECT_EQ(ob.depth(47),5); // no executions, 47 < limit price
 
     // has the buy order at 47 and remaining sell limit at 48
@@ -220,8 +222,10 @@ TEST_F(OrderBookTest, SellMarketToSellMarketLimit)
     EXPECT_EQ(rd.accepted().at(44).states.back(),OrderState::ACCEPTED); //still there
 
     // market order is now a partially filled limit order
-    EXPECT_EQ(rd.accepted().at(45).quantities.back(),8);
+    EXPECT_EQ(rd.accepted().at(45).quantities.back(),10);
     EXPECT_EQ(rd.accepted().at(45).states.back(),OrderState::PARTIAL);
+    EXPECT_EQ(rd.accepted().at(45).type,"SellMarketLimit");
+    EXPECT_EQ(rd.accepted().at(45).filled_price,48.25); // fill 5 @49 and 15 @48
 
     // Filled limit orders are in executions
     EXPECT_EQ(rd.completed().size(),2);
@@ -232,18 +236,18 @@ TEST_F(OrderBookTest, SellMarketToSellMarketLimit)
     EXPECT_EQ(rd.completed().at(43).states.back(),OrderState::FILLED);
 
     //Now fill the remainder
-    process_order(BuyMarket(48,8,55));
+    process_order(BuyMarket(48,10,55));
     EXPECT_EQ(rd.completed().size(),4);
     EXPECT_EQ(rd.accepted().size(),1);
     EXPECT_EQ(rd.completed().at(45).quantities.back(),0);
     EXPECT_EQ(rd.completed().at(45).states.back(),OrderState::FILLED);
     EXPECT_EQ(rd.completed().at(45).type,"SellMarketLimit");
+    EXPECT_EQ(rd.completed().at(45).filled_price,48.25);// fill 5 @49 and 15 @48
 
 }
 
 TEST_F(OrderBookTest, BuyLimitToBuyMarketLimit)
 {
-
     // make sell orders to buy
     process_order(SellLimit(42,5,50));
     process_order(SellLimit(43,5,51));
@@ -253,9 +257,9 @@ TEST_F(OrderBookTest, BuyLimitToBuyMarketLimit)
     EXPECT_EQ(ob.depth(51),5);
     EXPECT_EQ(ob.depth(52),5);
 
-    process_order(BuyLimit(45,18,51));
+    process_order(BuyLimit(45,20,51));
     EXPECT_EQ(ob.depth(50),0); // took all orders at 50
-    EXPECT_EQ(ob.depth(51),8); // take all at 51, then place buy limit for remaining
+    EXPECT_EQ(ob.depth(51),10); // take all at 51, then place buy limit for remaining
     EXPECT_EQ(ob.depth(52),5); // no executions, 52 > limit price
 
     // has the sell order at 52 and remaining buy limit at 51
@@ -265,23 +269,35 @@ TEST_F(OrderBookTest, BuyLimitToBuyMarketLimit)
     EXPECT_EQ(rd.accepted().at(44).states.back(),OrderState::ACCEPTED); //still there
 
     // market order is now a partially filled limit order
-    EXPECT_EQ(rd.accepted().at(45).quantities.back(),8);
+    EXPECT_EQ(rd.accepted().at(45).quantities.back(),10);
     EXPECT_EQ(rd.accepted().at(45).states.back(),OrderState::PARTIAL);
+    EXPECT_EQ(rd.accepted().at(45).type,"BuyMarketLimit");
+    EXPECT_EQ(rd.accepted().at(45).filled_price,50.75); // fill 5 @50 and 15 @51
 
     // Filled limit orders are in executions
     EXPECT_EQ(rd.completed().size(),2);
     EXPECT_EQ(rd.completed().at(42).quantities.back(),0);
     EXPECT_EQ(rd.completed().at(42).states.back(),OrderState::FILLED);
+    EXPECT_EQ(rd.completed().at(42).filled_price,50);
 
     EXPECT_EQ(rd.completed().at(43).quantities.back(),0);
     EXPECT_EQ(rd.completed().at(43).states.back(),OrderState::FILLED);
+    EXPECT_EQ(rd.completed().at(43).filled_price,51);
+
+    //Now fill the remainder
+    process_order(SellMarket(48,10,49));
+    EXPECT_EQ(rd.completed().size(),4);
+    EXPECT_EQ(rd.accepted().size(),1);
+    EXPECT_EQ(rd.completed().at(45).quantities.back(),0);
+    EXPECT_EQ(rd.completed().at(45).states.back(),OrderState::FILLED);
+    EXPECT_EQ(rd.completed().at(45).type,"BuyMarketLimit");
+    EXPECT_EQ(rd.completed().at(45).filled_price,50.75); // fill 5 @50 and 15 @51
 
 }
 
 TEST_F(OrderBookTest, SellLimitToSellMarketLimit)
 {
-
-    // make sell orders to buy
+    // make buy orders to sell into
     process_order(BuyLimit(42,5,49));
     process_order(BuyLimit(43,5,48));
     process_order(BuyLimit(44,5,47));
@@ -290,9 +306,9 @@ TEST_F(OrderBookTest, SellLimitToSellMarketLimit)
     EXPECT_EQ(ob.depth(48),5);
     EXPECT_EQ(ob.depth(47),5);
 
-    process_order(SellLimit(45,18,48));
+    process_order(SellLimit(45,20,48));
     EXPECT_EQ(ob.depth(49),0); // took all orders
-    EXPECT_EQ(ob.depth(48),8); // take all, then place buy limit for remaining
+    EXPECT_EQ(ob.depth(48),10); // take all, then place sell limit for remaining
     EXPECT_EQ(ob.depth(47),5); // no executions, 47 < limit price
 
     // has the buy order at 47 and remaining sell limit at 48
@@ -303,8 +319,10 @@ TEST_F(OrderBookTest, SellLimitToSellMarketLimit)
     EXPECT_EQ(rd.accepted().at(44).states.back(),OrderState::ACCEPTED); //still there
 
     // market order is now a partially filled limit order
-    EXPECT_EQ(rd.accepted().at(45).quantities.back(),8);
+    EXPECT_EQ(rd.accepted().at(45).quantities.back(),10);
     EXPECT_EQ(rd.accepted().at(45).states.back(),OrderState::PARTIAL);
+    EXPECT_EQ(rd.accepted().at(45).type,"SellMarketLimit");
+    EXPECT_EQ(rd.accepted().at(45).filled_price,48.25); // fill 5 @49 and 15 @48
 
     // Filled limit orders are in executions
     EXPECT_EQ(rd.completed().size(),2);
@@ -313,6 +331,15 @@ TEST_F(OrderBookTest, SellLimitToSellMarketLimit)
 
     EXPECT_EQ(rd.completed().at(43).quantities.back(),0);
     EXPECT_EQ(rd.completed().at(43).states.back(),OrderState::FILLED);
+
+    //Now fill the remainder
+    process_order(BuyMarket(48,10,55));
+    EXPECT_EQ(rd.completed().size(),4);
+    EXPECT_EQ(rd.accepted().size(),1);
+    EXPECT_EQ(rd.completed().at(45).quantities.back(),0);
+    EXPECT_EQ(rd.completed().at(45).states.back(),OrderState::FILLED);
+    EXPECT_EQ(rd.completed().at(45).type,"SellMarketLimit");
+    EXPECT_EQ(rd.completed().at(45).filled_price,48.25);// fill 5 @49 and 15 @48
 
 }
 

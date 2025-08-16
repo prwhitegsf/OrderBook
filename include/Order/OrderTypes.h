@@ -55,6 +55,32 @@ namespace order
             : id(o.id), qty(o.qty), price(o.price){}
     };
 
+
+    template<>
+    struct Order<BUY,MARKET,LIMIT>
+    {
+        ID id;
+        Qty qty;
+        Qty full_qty;
+        Price price;
+
+        Order(const ID id_t, const Qty qty_t, const Qty full_qty_t, const Price price_t)
+            : id(id_t), qty(qty_t), full_qty(full_qty_t), price(price_t){}
+    };
+
+    template<>
+    struct Order<SELL,MARKET,LIMIT>
+    {
+        ID id;
+        Qty qty;
+        Qty full_qty;
+        Price price;
+
+        Order(const ID id_t, const Qty qty_t, const Qty full_qty_t, const Price price_t)
+            : id(id_t), qty(qty_t), full_qty(full_qty_t), price(price_t){}
+    };
+
+
     using Market = Order<MARKET>;
     using Limit = Order<LIMIT>;
     using BuyLimit = Order<BUY,LIMIT>;
@@ -73,7 +99,8 @@ namespace order
 
 
     /// @brief state of orders in pending_q
-    using Pending = std::variant<   BuyLimit,SellLimit,
+    using Pending = std::variant<   BuyMarketLimit,SellMarketLimit,
+                                    BuyLimit,SellLimit,
                                     BuyMarket,SellMarket,
                                     Cancel>;
 

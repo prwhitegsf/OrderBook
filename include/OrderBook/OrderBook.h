@@ -113,6 +113,15 @@ public:
 
     void match(auto&& order);
 
+    void match_next_order()
+    {
+        if (!pending_q_.empty())
+        {
+            match(pending_q_.front());
+            pending_q_.pop();
+        }
+    }
+
 private:
 
     void push_matched(order::OrderFills&& fills);

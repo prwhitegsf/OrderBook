@@ -33,6 +33,11 @@ public:
     order::OrderFills match(order::BuyMarket o);
     order::OrderFills match(order::SellMarket o);
 
+    order::OrderFills match(order::BuyMarketLimit o);
+    order::OrderFills match(order::SellMarketLimit o);
+
+
+
     order::StateUpdate match(order::BuyLimit o);
     order::StateUpdate match(order::SellLimit o);
 
@@ -45,6 +50,7 @@ private:
     std::vector<Level> level_;
     order::StateUpdate limit(auto o);
     order::OrderFills market(auto o, auto&& dir);
+    order::OrderFills market_limit(auto o, auto&& dir);
     int fill_level(auto& o, order::OrderFills& fills);
     int fill_orders(auto& o, order::OrderFills& fills);
     int fill_remaining(auto& o, order::OrderFills& fills);

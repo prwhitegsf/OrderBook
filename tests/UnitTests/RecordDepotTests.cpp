@@ -120,7 +120,8 @@ TEST_F(OrderRecordsTest, ProcessBuyMarket)
 
     fills.back().market_fill.id = id;
     fills.back().market_fill.qty = 10;
-    fills.back().market_fill.fills.emplace_back(20,10);
+    fills.back().market_fill.fill_price = 20;
+    //fills.back().market_fill.fills.emplace_back(20,10);
 
     ors.record_processed_orders({fills,{}});
     ors.update_order_records();
@@ -131,8 +132,6 @@ TEST_F(OrderRecordsTest, ProcessBuyMarket)
     EXPECT_EQ(ors.completed().at(id).quantities.back(),0);
     EXPECT_EQ(ors.completed().at(id).quantities.front(),10);
     EXPECT_EQ(ors.completed().at(id).filled_price,20);
-
-
 }
 
 TEST_F(OrderRecordsTest, FindRecord)
@@ -194,8 +193,10 @@ TEST_F(OrderRecordsTest,SplitOrders)
     std::vector<order::OrderFills> fills(1);
     fills.back().market_fill.id = id;
     fills.back().market_fill.qty = 8;
-    fills.back().market_fill.fills.emplace_back(19,5);
+    fills.back().market_fill.fill_price = 19.5;
+    /*fills.back().market_fill.fills.emplace_back(19,5);
     fills.back().market_fill.fills.emplace_back(20,3);
+    */
 
     ors.record_processed_orders({fills,{}});
     ors.update_order_records();

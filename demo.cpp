@@ -57,9 +57,12 @@ int main()
         std::this_thread::sleep_for(std::chrono::milliseconds(wait));
     }
 
+    /*for (const auto& [id,rec] : record_depot.completed())
+        if (rec.filled_price == 0)
+            std::cout<<rec<<std::endl;*/
 
-    /*printer::print_accepted_orders(record_depot);
-    printer::print_completed_orders(record_depot);*/
+    //printer::print_accepted_orders(record_depot);
+   // printer::print_completed_orders(record_depot);
 
 
     return 0;

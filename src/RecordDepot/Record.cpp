@@ -19,7 +19,8 @@ void Record::update(const PartialFill o, const Time& ts)
     quantities.push_back(quantities.back()-o.qty);
     states.push_back(OrderState::PARTIAL);
     timestamps.push_back(ts);
-    filled_price = limit_price;
+    if (!filled_price)
+        filled_price = limit_price;
 }
 
 void Record::update(const Time& ts)
@@ -27,7 +28,7 @@ void Record::update(const Time& ts)
     quantities.push_back(0);
     states.push_back(OrderState::FILLED);
     timestamps.push_back(ts);
-    if (filled_price == 0)
+    if (!filled_price)
         filled_price = limit_price;
 }
 
@@ -41,13 +42,7 @@ void Record::update_market_limit(const MarketFill& o, const Time& ts)
     quantities.push_back(quantities.back() - o.qty);
     states.push_back(OrderState::PARTIAL);
     timestamps.push_back(ts);
-    limit_price = o.fills.back().first;
-    calculate_filled_price(o);
-
-    if (o.fills.back().second != 0)
-        filled_price += static_cast<float>(limit_price) *
-            (static_cast<float>(quantities.back())/static_cast<float>(quantities.front()));
-
+    filled_price = o.fill_price;
     type = type.starts_with("Buy") ? "BuyMarketLimit" : "SellMarketLimit";
 }
 
@@ -56,9 +51,7 @@ void Record::update(const MarketFill& o, const Time& ts)
     quantities.push_back(0);
     states.push_back(OrderState::FILLED);
     timestamps.push_back(ts);
-
-    if (filled_price==0)
-        calculate_filled_price(o);
+    filled_price = o.fill_price;
 
     if (type == "BuyLimit")
         type= "BuyMarketLimit";
@@ -66,19 +59,6 @@ void Record::update(const MarketFill& o, const Time& ts)
         type = "SellMarketLimit";
 }
 
-void Record::calculate_filled_price(const MarketFill& o)
-{
-    if (filled_price == 0)
-    {
-        auto initial_qty = static_cast<float>(quantities.front());
-
-        filled_price = std::accumulate(o.fills.begin(), o.fills.end(), 0.0f,[initial_qty](float fill_price, auto fill)
-        {
-            return fill_price + static_cast<float>(fill.first) *
-                    (static_cast<float>(fill.second)/initial_qty);
-        });
-    }
-}
 
 void Record::update(const OrderState state, const Time& ts)
 {
