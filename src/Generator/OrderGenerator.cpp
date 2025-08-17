@@ -73,10 +73,10 @@ namespace gen
         {
             o = backfill(ob, id, max_qty);
         }
-        else if (type <=1 )
+        /*else if (type <=1 )
         {
             o = make_cancel_order(rd);
-        }
+        }*/
         else if (type <= 5)
         {
             if (price >= mid)

@@ -371,7 +371,7 @@ TEST_F(OrderBookTest, Cancel)
 
 TEST_F(OrderBookTest,SelfConsistent_WithUnderflowCheck)
 {
-    size_t iterations{1000};
+    size_t iterations{10000};
 
     //Set up
     OrderBook<Fifo> ob1(Instrument("x",100,49,50,2));
@@ -394,6 +394,8 @@ TEST_F(OrderBookTest,SelfConsistent_WithUnderflowCheck)
             EXPECT_TRUE( depth < 10000);
     }
 
+    for (auto& [id, rec] : rd1.completed())
+        EXPECT_TRUE(rec.quantities.back() < 11000);
 
     std::unordered_map<ID,order::Record> accepted_1 = rd1.accepted();
     std::unordered_map<ID,order::Record> executed_1 = rd1.completed();

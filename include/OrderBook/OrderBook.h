@@ -171,7 +171,10 @@ void OrderBook<Matcher>::match_order()
 template <Is_Matcher Matcher>
 order::Processed OrderBook<Matcher>::get_processed_orders()
 {
-    return std::move(std::make_pair(order_fills_, order_states_));
+    auto processed = std::make_pair(order_fills_, order_states_);
+    order_fills_.back().market_fill.id = 0;
+    order_states_.back().id = 0;
+    return std::move(processed);
 
 }
 
@@ -188,7 +191,7 @@ template <Is_Matcher Matcher>
 void OrderBook<Matcher>::push_matched(order::StateUpdate&& updates)
 {
     // temp fix while designing RingBuffer
-    order_states_.back() = std::move(updates);
+    order_states_.back() = updates;
 
 }
 

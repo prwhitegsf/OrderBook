@@ -104,8 +104,11 @@ void RecordDepot<R>::timestamp()
 template <typename R>
 void RecordDepot<R>::record_processed_orders(order::Processed&&  processed_orders)
 {
-    record_states(std::move(processed_orders.second));
-    record_fills(std::move(processed_orders.first));
+    if (!processed_orders.second.empty() && processed_orders.second.back().id != 0)
+        record_states(std::move(processed_orders.second));
+
+    if (!processed_orders.first.empty() && processed_orders.first.back().market_fill.id != 0)
+        record_fills(std::move(processed_orders.first));
 }
 
 

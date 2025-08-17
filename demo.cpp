@@ -15,7 +15,7 @@
 int main()
 {
 
-    constexpr size_t iterations{100000}; // number of trades to simulate after initialization
+    constexpr size_t iterations{10000}; // number of trades to simulate after initialization
     constexpr size_t dom_window{5}; // number of prices on either side of bid/ask to display depth for
     constexpr size_t wait{0}; // pause (in ms) between trades
 

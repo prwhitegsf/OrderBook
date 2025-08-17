@@ -50,21 +50,17 @@ namespace gen
         order::Submitted record_order(order::Submitted&& o);
         order::Submitted make_random_order(OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd, Qty max_qty=10, float sweep_chance =0.1);
 
-Price reactive_price_generation(const OrderBook<Fifo>& ob)
+        Price reactive_price_generation(const OrderBook<Fifo>& ob)
         {
             Price price{};
             size_t margin=ob.num_prices()/10;
             while (price < margin || price > ob.num_prices() - margin)
-            {
-
                 price = normal(ob.mid(), ob.protection()*8);
 
-            }
-
-
             price < ob.mid() ?  ++submitted_stats["below mid"] :
-                price > ob.mid() ?  ++submitted_stats["above mid"] :
-                ++submitted_stats["at mid"];
+            price > ob.mid() ?  ++submitted_stats["above mid"] :
+                                ++submitted_stats["at mid"];
+
             return price;
         }
 
@@ -81,24 +77,19 @@ Price reactive_price_generation(const OrderBook<Fifo>& ob)
             order::Submitted o{};
             const unsigned short type = uniform(0,10);
 
-            /*if (binomial(0.9)) // randomly check if we need to backfill
-            {
-                o = backfill(ob, id, max_qty);
-            }*/
-            /*else if (type <=1 )
-            {
-                o = make_cancel_order(rd);
-            }*/
             if (ob.depth(mid) == 0)
             {
-                if (price < mid)
+                o = price < mid ?
+                    make_limit_order<order::BuyLimit>(id, max_qty,mid) :
+                    make_limit_order<order::SellLimit>(id, max_qty,mid);
+                /*if (price < mid)
                 {
                     o = make_limit_order<order::BuyLimit>(id, max_qty,mid);
                 }
                 else
                 {
                     o = make_limit_order<order::SellLimit>(id, max_qty,mid);
-                }
+                }*/
             }
             else if (type > 5 )// types >= 6 are limit orders
             {
