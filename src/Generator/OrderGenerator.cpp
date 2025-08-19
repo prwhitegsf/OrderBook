@@ -122,7 +122,8 @@ namespace gen
         const ID id = next_seq_id();
 
         // to prevent order build up at a single price
-        auto too_many_orders = [&]{ return ob.count(price) > 100; };
+        auto too_many_orders = [&]{ return ob.count(price) >= 100; };
+        const unsigned short type = uniform(0,10);
 
         order::Submitted o{};
 
@@ -132,21 +133,22 @@ namespace gen
                     make_limit_order<order::BuyLimit>(id, max_qty,mid) :
                     make_limit_order<order::SellLimit>(id, max_qty,mid);
         }
-        else if (mid < margin ) // Price getting too low
+
+        else if (ob.bid() < margin ) // Price getting too low
         {
             o = !too_many_orders() ?
                     make_market_order<order::BuyMarket>(ob, id, max_qty,0) :
                     make_market_order<order::SellMarket>(ob, id, max_qty,0);
         }
-        else if (mid > ob.num_prices()-margin ) // Price getting too high
+        else if (ob.ask() > ob.num_prices()-margin ) // Price getting too high
         {
             o = !too_many_orders() ?
                     make_market_order<order::SellMarket>(ob, id, max_qty,0) :
                     make_market_order<order::BuyMarket>(ob, id, max_qty,0);
         }
-        else if (binomial(0.4)) // Limit orders
+        else if (binomial(0.5)) // Limit orders
         {
-            if (price < mid)
+           if (price < mid)
             {
                 o = !too_many_orders() ?
                         make_limit_order<order::BuyLimit>(id, max_qty,price) :
@@ -161,6 +163,7 @@ namespace gen
         }
         else // Market orders
         {
+
             o = price >= mid ?
                     make_market_order<order::BuyMarket>(ob, id, max_qty,sweep_chance) :
                     make_market_order<order::SellMarket>(ob, id, max_qty,sweep_chance);

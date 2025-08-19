@@ -7,8 +7,8 @@
 //
 #include "Evaluator.h"
 
-Evaluator::Evaluator(Dom& dom, std::queue<order::Pending>& accepted_q)
-                    : d_(dom), accepted_q_(accepted_q){}
+Evaluator::Evaluator(Dom& dom, std::queue<order::Pending>& pending_q)
+                    : d_(dom), pending_q_(pending_q){}
 
 void Evaluator::evaluate_order(order::BuyLimit o) const
 {
@@ -151,7 +151,7 @@ void Evaluator::evaluate_order(order::BuyLimit o) const
  void Evaluator::subtract_depth(const Price price, const Qty depth) const {d_.dom[price] -=  depth;}
 
  void Evaluator::push_accepted(order::Pending&& o) const {
-    accepted_q_.emplace(o);
+    pending_q_.emplace(o);
 }
 
  void Evaluator::place_limit(order::BuyLimit o) const {
@@ -197,6 +197,5 @@ void Evaluator::evaluate_order(order::BuyLimit o) const
         --d_.bid;
     }
 
-    //return d_.bid;
 }
 
