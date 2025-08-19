@@ -24,6 +24,7 @@ namespace order
     {
         ID id{};
         Qty qty{};
+        Price limit{};
         float fill_price{};
 
     };
@@ -40,6 +41,7 @@ namespace order
         ID id{};
         OrderState state{OrderState::SUBMITTED};
     };
+
 
     using Processed =  std::pair<std::vector<OrderFills>,std::vector<StateUpdate>>;
 

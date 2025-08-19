@@ -28,10 +28,20 @@ float Fifo::fill_price(Price price, Qty filled_qty, Qty full_qty) {
 
 StateUpdate Fifo::match(Cancel o)
 {
+    // if we find the order, update the depth and order state, otherwise throw
+    if (!std::erase_if(level_[o.price].orders,[&](const Limit& ord){ return ord.id == o.id; }))
+    {
+        throw(std::invalid_argument("Cancelled order not found at price"));
+    }
+
     level_[o.price].depth -= o.qty;
-    std::erase_if(level_[o.price].orders,[&](const Limit& ord){ return ord.id == o.id; });
     return StateUpdate{o.id,OrderState::CANCELLED};
-};
+}
+
+StateUpdate Fifo::match(Rejected o)
+{
+    return StateUpdate{o.id,OrderState::REJECTED};
+}
 
 StateUpdate Fifo::limit(auto o)
 {
@@ -39,7 +49,6 @@ StateUpdate Fifo::limit(auto o)
     level_[o.price].orders.emplace_back(o);
     level_[o.price].depth += o.qty;
     return StateUpdate{o.id,OrderState::ACCEPTED};
-
 }
 
 
@@ -49,7 +58,6 @@ OrderFills Fifo::market_limit(auto o, auto&& dir)
     OrderFills fills;
     fills.market_fill.id = o.id;
     fills.market_fill.qty = o.qty; // our original qty for market portion
-
 
     // Market order takes all the available liquidity at current the level at once
     for (;o.qty > level_[o.price].depth; o.price = dir(o.price,1))
@@ -64,6 +72,8 @@ OrderFills Fifo::market_limit(auto o, auto&& dir)
     fills.market_fill.fill_price +=
         fills.market_fill.fill_price == 0 ? o.price :
         fill_price(o.price,o.qty + (o.full_qty-fills.market_fill.qty),o.full_qty);
+
+    fills.market_fill.limit = o.limit;
 
     // take orders in full
     while (!level_[o.price].orders.empty() && o.qty > level_[o.price].orders.front().qty)
@@ -87,13 +97,12 @@ OrderFills Fifo::market(auto o, auto&& dir)
     fills.market_fill.id = o.id;
     fills.market_fill.qty = o.qty;
 
-
     // Market order takes all the available liquidity at current the level at once
     for (;o.qty > level_[o.price].depth; o.price = dir(o.price,1))
     {
         fills.market_fill.fill_price +=
             fill_price(o.price,level_[o.price].depth,fills.market_fill.qty);
-        //fills.market_fill.fill_price += o.price * (level_[o.price].depth/static_cast<float>(fills.market_fill.qty));
+
         o.qty -= level_[o.price].depth;
         fill_level(o, fills);
     }
@@ -103,6 +112,7 @@ OrderFills Fifo::market(auto o, auto&& dir)
         fills.market_fill.fill_price == 0 ? o.price :
         fill_price(o.price,level_[o.price].depth,fills.market_fill.qty);
 
+    fills.market_fill.limit = o.price;
 
     // take orders in full
     while (!level_[o.price].orders.empty() && o.qty > level_[o.price].orders.front().qty)

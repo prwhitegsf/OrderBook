@@ -36,12 +36,11 @@ public:
     order::OrderFills match(order::BuyMarketLimit o);
     order::OrderFills match(order::SellMarketLimit o);
 
-
-
     order::StateUpdate match(order::BuyLimit o);
     order::StateUpdate match(order::SellLimit o);
 
     order::StateUpdate match(order::Cancel o);
+    static order::StateUpdate match(order::Rejected o);
 
     [[nodiscard]] const Level& level(size_t idx)const;
 

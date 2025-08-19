@@ -43,6 +43,7 @@ void Record::update_market_limit(const MarketFill& o, const Time& ts)
     states.push_back(OrderState::PARTIAL);
     timestamps.push_back(ts);
     filled_price = o.fill_price;
+    limit_price = o.limit;
     type = type.starts_with("Buy") ? "BuyMarketLimit" : "SellMarketLimit";
 }
 
@@ -52,6 +53,8 @@ void Record::update(const MarketFill& o, const Time& ts)
     states.push_back(OrderState::FILLED);
     timestamps.push_back(ts);
     filled_price = o.fill_price;
+    if (!limit_price)
+        limit_price = o.limit;
 
     if (type == "BuyLimit")
         type= "BuyMarketLimit";

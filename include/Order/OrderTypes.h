@@ -63,9 +63,10 @@ namespace order
         Qty qty;
         Qty full_qty;
         Price price;
+        Price limit;
 
-        Order(const ID id_t, const Qty qty_t, const Qty full_qty_t, const Price price_t)
-            : id(id_t), qty(qty_t), full_qty(full_qty_t), price(price_t){}
+        Order(const ID id_t, const Qty qty_t, const Qty full_qty_t, const Price price_t, const Price limit_t)
+            : id(id_t), qty(qty_t), full_qty(full_qty_t), price(price_t), limit(limit_t){}
     };
 
     template<>
@@ -75,9 +76,11 @@ namespace order
         Qty qty;
         Qty full_qty;
         Price price;
+        Price limit;
 
-        Order(const ID id_t, const Qty qty_t, const Qty full_qty_t, const Price price_t)
-            : id(id_t), qty(qty_t), full_qty(full_qty_t), price(price_t){}
+
+        Order(const ID id_t, const Qty qty_t, const Qty full_qty_t, const Price price_t, const Price limit_t)
+            : id(id_t), qty(qty_t), full_qty(full_qty_t), price(price_t), limit(limit_t){}
     };
 
 
@@ -102,7 +105,7 @@ namespace order
     using Pending = std::variant<   BuyMarketLimit,SellMarketLimit,
                                     BuyLimit,SellLimit,
                                     BuyMarket,SellMarket,
-                                    Cancel>;
+                                    Cancel, Rejected>;
 
 
 

@@ -73,10 +73,10 @@ namespace gen
         {
             o = backfill(ob, id, max_qty);
         }
-        /*else if (type <=1 )
+        else if (type <=1 )
         {
             o = make_cancel_order(rd);
-        }*/
+        }
         else if (type <= 5)
         {
             if (price >= mid)
@@ -99,6 +99,79 @@ namespace gen
             {
                 o = make_limit_order<order::SellLimit>(id, max_qty,price);
             }
+        }
+
+        rd.make_order_record(o);
+
+        return o;
+    }
+
+    Price OrderGenerator::reactive_price_generation(const OrderBook<Fifo>& ob, const size_t margin) {
+        Price price{};
+
+        while (price < margin || price > ob.num_prices() - margin)
+            price = normal(ob.mid(), ob.protection()*8);
+
+        price < ob.mid() ?  ++submitted_stats["below mid"] :
+            price > ob.mid() ?  ++submitted_stats["above mid"] :
+            ++submitted_stats["at mid"];
+
+        return price;
+    }
+
+    order::Submitted OrderGenerator::make_pending_order(OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd,
+        Qty max_qty, float sweep_chance) {
+        track_min_and_max_prices(ob);
+        ++submitted_stats["total"];
+
+        const Price mid = ob.mid();
+        size_t margin=ob.num_prices()/10;
+        const Price price = reactive_price_generation(ob,margin);
+        const ID id = next_seq_id();
+
+        // to prevent order build up at a single price
+        auto too_many_orders = [&]{ return ob.count(price) > 100; };
+
+        order::Submitted o{};
+
+        if (ob.depth(mid) == 0) // Backfill
+        {
+            o = price < mid ?
+                    make_limit_order<order::BuyLimit>(id, max_qty,mid) :
+                    make_limit_order<order::SellLimit>(id, max_qty,mid);
+        }
+        else if (mid < margin ) // Price getting too low
+        {
+            o = !too_many_orders() ?
+                    make_market_order<order::BuyMarket>(ob, id, max_qty,0) :
+                    make_market_order<order::SellMarket>(ob, id, max_qty,0);
+        }
+        else if (mid > ob.num_prices()-margin ) // Price getting too high
+        {
+            o = !too_many_orders() ?
+                    make_market_order<order::SellMarket>(ob, id, max_qty,0) :
+                    make_market_order<order::BuyMarket>(ob, id, max_qty,0);
+        }
+        else if (binomial(0.4)) // Limit orders
+        {
+            if (price < mid)
+            {
+                o = !too_many_orders() ?
+                        make_limit_order<order::BuyLimit>(id, max_qty,price) :
+                        make_market_order<order::SellMarket>(ob, id, max_qty,0);
+            }
+            else
+            {
+                o = !too_many_orders() ?
+                        make_limit_order<order::SellLimit>(id, max_qty,price) :
+                        make_market_order<order::BuyMarket>(ob, id, max_qty,0);
+            }
+        }
+        else // Market orders
+        {
+            o = price >= mid ?
+                    make_market_order<order::BuyMarket>(ob, id, max_qty,sweep_chance) :
+                    make_market_order<order::SellMarket>(ob, id, max_qty,sweep_chance);
         }
 
         rd.make_order_record(o);

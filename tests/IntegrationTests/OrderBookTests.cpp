@@ -369,9 +369,52 @@ TEST_F(OrderBookTest, Cancel)
 
 }
 
+TEST_F(OrderBookTest,CancelMarketLimit)
+{
+    // make sell orders to buy
+    process_order(SellLimit(42,5,50));
+    process_order(SellLimit(43,5,51));
+    process_order(SellLimit(44,5,52));
+
+    EXPECT_EQ(ob.depth(50),5);
+    EXPECT_EQ(ob.depth(51),5);
+    EXPECT_EQ(ob.depth(52),5);
+
+    process_order(BuyMarket(45,20,51));
+    EXPECT_EQ(ob.depth(50),0); // took all orders at 50
+    EXPECT_EQ(ob.depth(51),10); // take all at 51, then place buy limit for remaining
+    EXPECT_EQ(ob.depth(52),5); // no executions, 52 > limit price
+
+    // has the sell order at 52 and remaining buy limit at 51
+    EXPECT_EQ(rd.accepted().size(),2);
+    // sell limit at 52 still there
+    EXPECT_EQ(rd.accepted().at(44).quantities.back(),5); //still there
+    EXPECT_EQ(rd.accepted().at(44).states.back(),OrderState::ACCEPTED); //still there
+
+    // market order is now a partially filled limit order
+    EXPECT_EQ(rd.accepted().at(45).quantities.back(),10);
+    EXPECT_EQ(rd.accepted().at(45).states.back(),OrderState::PARTIAL);
+    EXPECT_EQ(rd.accepted().at(45).type,"BuyMarketLimit");
+    EXPECT_EQ(rd.accepted().at(45).filled_price,50.75); // fill 5 @50 and 15 @51
+
+    // Filled limit orders are in executions
+    EXPECT_EQ(rd.completed().size(),2);
+    EXPECT_EQ(rd.completed().at(42).quantities.back(),0);
+    EXPECT_EQ(rd.completed().at(42).states.back(),OrderState::FILLED);
+    EXPECT_EQ(rd.completed().at(42).filled_price,50);
+
+    EXPECT_EQ(rd.completed().at(43).quantities.back(),0);
+    EXPECT_EQ(rd.completed().at(43).states.back(),OrderState::FILLED);
+    EXPECT_EQ(rd.completed().at(43).filled_price,51);
+    // Now cancel the remaining market limit
+    process_order(Cancel(45,10,51));
+    EXPECT_EQ(ob.depth(51),0);
+}
+
+
 TEST_F(OrderBookTest,SelfConsistent_WithUnderflowCheck)
 {
-    size_t iterations{10000};
+    size_t iterations{100000};
 
     //Set up
     OrderBook<Fifo> ob1(Instrument("x",100,49,50,2));
