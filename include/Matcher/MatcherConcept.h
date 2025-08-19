@@ -15,6 +15,8 @@ concept Is_Matcher = requires(Matcher matcher)
 
     matcher.match(order::BuyLimit(0,1,1));
     matcher.match(order::SellLimit(0,1,1));
+    matcher.match(order::BuyMarketLimit(0,1,1,1,1));
+    matcher.match(order::SellMarketLimit(0,1,1,1,1));
     matcher.match(order::BuyMarket(0,1,1));
     matcher.match(order::SellMarket(0,1,1));
     matcher.match(order::Cancel(0,1,1));

@@ -61,13 +61,13 @@ public:
     :   inst_(inst), num_prices_(inst_.num_prices_), matcher_(num_prices_),
         d_(num_prices_, inst_.starting_ask_, inst_.starting_bid_,inst_.protection_),
         order_fills_(1),order_states_(1), // temp fix while designing RingBuffer
-        evaluator_(d_,pending_q_,order_states_){}
+        evaluator_(d_,pending_q_){}
 
     explicit OrderBook(Instrument&& inst)
     :   inst_(std::move(inst)), num_prices_(inst_.num_prices_), matcher_(num_prices_),
         order_fills_(1),order_states_(1),// temp fix while designing RingBuffer
         d_(num_prices_, inst_.starting_ask_, inst_.starting_bid_,inst_.protection_),
-        evaluator_(d_,pending_q_,order_states_){}
+        evaluator_(d_,pending_q_){}
 
     /// @brief receive order and push to submit queue
     /// @param o incoming order from client api or order generator

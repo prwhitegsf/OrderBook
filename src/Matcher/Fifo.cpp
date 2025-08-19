@@ -58,22 +58,20 @@ OrderFills Fifo::market_limit(auto o, auto&& dir)
     OrderFills fills;
     fills.market_fill.id = o.id;
     fills.market_fill.qty = o.qty; // our original qty for market portion
+    const Qty full_qty = o.qty + o.limit_qty;
+    fills.market_fill.limit = o.limit_price;
 
     // Market order takes all the available liquidity at current the level at once
     for (;o.qty > level_[o.price].depth; o.price = dir(o.price,1))
     {
-        fills.market_fill.fill_price +=
-            fill_price(o.price,level_[o.price].depth,o.full_qty);
+        fills.market_fill.fill_price += fill_price(o.price,level_[o.price].depth,full_qty);
         o.qty -= level_[o.price].depth;
         fill_level(o, fills);
     }
 
     // Remaining orders are filled at the current price
-    fills.market_fill.fill_price +=
-        fills.market_fill.fill_price == 0 ? o.price :
-        fill_price(o.price,o.qty + (o.full_qty-fills.market_fill.qty),o.full_qty);
-
-    fills.market_fill.limit = o.limit;
+    fills.market_fill.fill_price += fills.market_fill.fill_price == 0 ?
+        o.price : fill_price(o.price,o.qty + o.limit_qty,full_qty);
 
     // take orders in full
     while (!level_[o.price].orders.empty() && o.qty > level_[o.price].orders.front().qty)
@@ -108,9 +106,8 @@ OrderFills Fifo::market(auto o, auto&& dir)
     }
 
     // Remaining orders are filled at the current price
-    fills.market_fill.fill_price +=
-        fills.market_fill.fill_price == 0 ? o.price :
-        fill_price(o.price,level_[o.price].depth,fills.market_fill.qty);
+    fills.market_fill.fill_price += fills.market_fill.fill_price == 0 ?
+        o.price : fill_price(o.price,level_[o.price].depth,fills.market_fill.qty);
 
     fills.market_fill.limit = o.price;
 
@@ -145,7 +142,6 @@ int Fifo::fill_level(auto& o, OrderFills& fills)
 
 int Fifo::fill_orders(auto& o, OrderFills& fills)
 {
-
     level_[o.price].depth -= level_[o.price].orders.front().qty;
 
     fills.limit_fills.push_back(level_[o.price].orders.front().id);

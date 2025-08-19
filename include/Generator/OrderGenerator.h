@@ -50,6 +50,7 @@ namespace gen
         order::Submitted record_order(order::Submitted&& o);
         order::Submitted make_random_order(OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd, Qty max_qty=10, float sweep_chance =0.1);
         order::Submitted make_pending_order(OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd, Qty max_qty=10, float sweep_chance =0.1);
+        void print_submitted_stats();
 
     private:
 

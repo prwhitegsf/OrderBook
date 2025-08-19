@@ -73,40 +73,30 @@ namespace gen
         {
             o = backfill(ob, id, max_qty);
         }
-        else if (type <=1 )
+        else if (type <=1 ) // cancel orders
         {
             o = make_cancel_order(rd);
         }
-        else if (type <= 5)
+        else if (type <= 5) // market orders
         {
-            if (price >= mid)
-            {
-                o = make_market_order<order::BuyMarket>(ob, id, max_qty,sweep_chance);
-            }
-            else
-            {
-                o = make_market_order<order::SellMarket>(ob, id, max_qty,sweep_chance);
-            }
-
+            o = price >= mid ?
+                make_market_order<order::BuyMarket>(ob, id, max_qty,sweep_chance) :
+                make_market_order<order::SellMarket>(ob, id, max_qty,sweep_chance);
         }
-        else// types >= 6 are limit orders
+        else// limit orders
         {
-            if (price < mid)
-            {
-                o = make_limit_order<order::BuyLimit>(id, max_qty,price);
-            }
-            else
-            {
-                o = make_limit_order<order::SellLimit>(id, max_qty,price);
-            }
+            o = price < mid ?
+                make_limit_order<order::BuyLimit>(id, max_qty,price) :
+                make_limit_order<order::SellLimit>(id, max_qty,price);
         }
 
-        rd.make_order_record(o);
+        rd.make_order_record(o); // submit order to record depot
 
         return o;
     }
 
-    Price OrderGenerator::reactive_price_generation(const OrderBook<Fifo>& ob, const size_t margin) {
+    Price OrderGenerator::reactive_price_generation(const OrderBook<Fifo>& ob, const size_t margin)
+    {
         Price price{};
 
         while (price < margin || price > ob.num_prices() - margin)
@@ -119,8 +109,10 @@ namespace gen
         return price;
     }
 
-    order::Submitted OrderGenerator::make_pending_order(OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd,
-        Qty max_qty, float sweep_chance) {
+    order::Submitted OrderGenerator::make_pending_order(
+        OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd,
+        Qty max_qty, float sweep_chance)
+    {
         track_min_and_max_prices(ob);
         ++submitted_stats["total"];
 
@@ -177,6 +169,18 @@ namespace gen
         rd.make_order_record(o);
 
         return o;
+    }
+
+    void OrderGenerator::print_submitted_stats()
+    {
+
+        auto key_view = submitted_stats | std::views::keys;
+        std::vector<std::string> sorted_keys;
+        std::ranges::copy(key_view, std::back_inserter(sorted_keys));
+        std::ranges::sort(sorted_keys);
+
+        for (auto& k : sorted_keys)
+            std::cout<<k<<' '<<submitted_stats.at(k)<<std::endl;
     }
 
 
@@ -280,7 +284,7 @@ namespace gen
         const Price first = ob.bid() - ob.protection(), last=ob.mid();
         auto range = ob.depth(first, last);
 
-        for (int i=last; i >= first; --i)
+        for (int i = last; i >= first; --i)
         {
             if (!ob.depth(i))
             {

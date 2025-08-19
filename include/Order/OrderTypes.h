@@ -55,18 +55,17 @@ namespace order
             : id(o.id), qty(o.qty), price(o.price){}
     };
 
-
     template<>
     struct Order<BUY,MARKET,LIMIT>
     {
         ID id;
         Qty qty;
-        Qty full_qty;
         Price price;
-        Price limit;
+        Qty limit_qty;
+        Price limit_price;
 
-        Order(const ID id_t, const Qty qty_t, const Qty full_qty_t, const Price price_t, const Price limit_t)
-            : id(id_t), qty(qty_t), full_qty(full_qty_t), price(price_t), limit(limit_t){}
+        Order(const ID id_t, const Qty qty_t, const Price price_t, const Qty limit_qty_t,  const Price limit_t)
+            : id(id_t), qty(qty_t), price(price_t), limit_qty(limit_qty_t), limit_price(limit_t){}
     };
 
     template<>
@@ -74,13 +73,13 @@ namespace order
     {
         ID id;
         Qty qty;
-        Qty full_qty;
         Price price;
-        Price limit;
+        Qty limit_qty;
+        Price limit_price;
 
 
-        Order(const ID id_t, const Qty qty_t, const Qty full_qty_t, const Price price_t, const Price limit_t)
-            : id(id_t), qty(qty_t), full_qty(full_qty_t), price(price_t), limit(limit_t){}
+        Order(const ID id_t, const Qty qty_t, const Price price_t, const Qty limit_qty_t,  const Price limit_t)
+            : id(id_t), qty(qty_t), price(price_t), limit_qty(limit_qty_t), limit_price(limit_t){}
     };
 
 

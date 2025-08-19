@@ -228,7 +228,7 @@ TEST_F(FifoTests,BuyMarketLimit)
     EXPECT_EQ(fifo.level(6).orders.size(), 1);
     EXPECT_EQ(fifo.level(6).orders.front().qty, 2);
 
-    auto fills = fifo.match(BuyMarketLimit(42,6,8,5,5));
+    auto fills = fifo.match(BuyMarketLimit(42,6,5,2,6));
 
     // BuyMarketLimit takes all the orders from 5 and 6
     EXPECT_EQ(fifo.level(5).depth, 0);
@@ -262,7 +262,7 @@ TEST_F(FifoTests,SellMarketLimit)
     EXPECT_EQ(fifo.level(6).orders.size(), 1);
     EXPECT_EQ(fifo.level(6).orders.front().qty, 2);
 
-    auto fills = fifo.match(SellMarketLimit(42,6,8,7,7));
+    auto fills = fifo.match(SellMarketLimit(42,6,7,2,6));
 
     // SellMarketLimit takes all the orders from 5 and 6
     EXPECT_EQ(fifo.level(7).depth, 0);

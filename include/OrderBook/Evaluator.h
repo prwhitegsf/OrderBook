@@ -22,7 +22,7 @@ class Evaluator
 {
     Dom& d_;
     std::queue<order::Pending>& accepted_q_;
-    std::vector<order::StateUpdate>& state_update_q_;
+    //std::vector<order::StateUpdate>& state_update_q_;
 
     void set_depth(Price price, Qty depth) const;
     void add_depth(Price price, Qty depth) const;
@@ -48,8 +48,7 @@ public:
     ///
     /// @param dom reference to dom
     /// @param accepted_q reference to accepted
-    /// @param state_updates reference to state_updates
-    Evaluator(Dom& dom, std::queue<order::Pending>& accepted_q, std::vector<order::StateUpdate>& state_updates);
+    Evaluator(Dom& dom, std::queue<order::Pending>& accepted_q);
 
     void evaluate_order(order::BuyLimit o) const;
     void evaluate_order(order::BuyMarket o) const;
