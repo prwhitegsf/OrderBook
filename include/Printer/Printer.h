@@ -5,11 +5,10 @@
 #ifndef ORDERBOOK_DEMO_H
 #define ORDERBOOK_DEMO_H
 
-
-#include <thread>
-#include "Instrument.h"
-
 #include <iostream>
+#include <ranges>
+
+#include "Instrument.h"
 #include "Record.h"
 
 

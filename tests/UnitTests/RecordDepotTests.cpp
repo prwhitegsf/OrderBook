@@ -28,11 +28,7 @@ TEST_F(OrderRecordsTest, MakeRecord)
     EXPECT_EQ(o.quantities.back(),5);
     EXPECT_EQ(o.limit_price,10);
     EXPECT_EQ(o.type,"BuyLimit");
-
 }
-
-
-
 
 
 TEST_F(OrderRecordsTest, StateUpdatesNoMove)
@@ -44,13 +40,6 @@ TEST_F(OrderRecordsTest, StateUpdatesNoMove)
 
     for (int id{1}; id <= 4; ++id)
         EXPECT_EQ(OrderState::SUBMITTED, ors.accepted().at(id).states.back());
-
-    /*std::vector<StateUpdate> state_updates({
-        StateUpdate{1,OrderState::ACCEPTED},
-        StateUpdate{2,OrderState::PENDING},
-        StateUpdate{3,OrderState::PENDING},
-        StateUpdate{4,OrderState::ACCEPTED}});
-        */
 
     std::vector<StateUpdate> state_updates({StateUpdate{1,OrderState::ACCEPTED}});
 
@@ -64,8 +53,6 @@ TEST_F(OrderRecordsTest, StateUpdatesNoMove)
     ors.update_order_records();
     EXPECT_EQ(OrderState::PENDING, ors.accepted().at(2).states.back());
 
-    /*EXPECT_EQ(OrderState::PENDING, ors.accepted().at(3).states.back());
-    EXPECT_EQ(OrderState::ACCEPTED, ors.accepted().at(4).states.back());*/
 
 }
 
@@ -101,8 +88,6 @@ TEST_F(OrderRecordsTest,StateUpdateWithMove)
 
     ors.record_processed_orders({{},state_updates});
     ors.update_order_records();
-    /*ors.record_states(std::move(state_updates));
-    ors.update_states();*/
 
     EXPECT_EQ(ors.completed().size(),4); // now the orders are in the executed table
     EXPECT_EQ(ors.accepted().size(),0); // and removed from accepted
@@ -118,7 +103,7 @@ TEST_F(OrderRecordsTest,StateUpdateWithMove)
 
 TEST_F(OrderRecordsTest, ProcessBuyMarket)
 {
-    ID id{1};
+    constexpr ID id{1};
     ors.make_order_record(BuyMarket(id,10,20));
     EXPECT_EQ(ors.accepted().size(),1);
 
@@ -127,7 +112,6 @@ TEST_F(OrderRecordsTest, ProcessBuyMarket)
     fills.back().market_fill.id = id;
     fills.back().market_fill.qty = 10;
     fills.back().market_fill.fill_price = 20;
-    //fills.back().market_fill.fills.emplace_back(20,10);
 
     ors.record_processed_orders({fills,{}});
     ors.update_order_records();
@@ -142,7 +126,7 @@ TEST_F(OrderRecordsTest, ProcessBuyMarket)
 
 TEST_F(OrderRecordsTest, FindRecord)
 {
-    const ID id{1};
+    constexpr ID id{1};
     ors.make_order_record(BuyLimit(id,5,10));
     // find in accepted
     EXPECT_EQ(ors.accepted().size(),1);
@@ -151,20 +135,7 @@ TEST_F(OrderRecordsTest, FindRecord)
     EXPECT_EQ(o.id,id);
 
     std::vector<order::OrderFills> fills(1);
-    //fills.emplace_back();
     fills.back().limit_fills.push_back(id);
-
-    /*
-    ors.record_processed_orders({fills,{}});
-    ors.update_order_records();
-    //fills.clear(); // we do this manually, ob provides its own cleanup
-
-    // We expect the order to move to executed
-    EXPECT_EQ(ors.accepted().size(),0);
-    EXPECT_EQ(ors.completed().size(),1);
-    o = ors.find_order_record(1); // finding in completed
-    EXPECT_EQ(o.id,id);
-    */
 
     // unfound order
     auto ufo = ors.find_order_record(2);
@@ -189,7 +160,7 @@ TEST_F(OrderRecordsTest,SplitOrders)
     // so what ends up on the books is identical
 
     // simulate placement of original order
-    ID id{1};
+    constexpr ID id{1};
     ors.make_order_record(BuyMarket(id,10,20));
     EXPECT_EQ(ors.accepted().size(),1);
 
@@ -202,9 +173,6 @@ TEST_F(OrderRecordsTest,SplitOrders)
     fills.back().market_fill.id = id;
     fills.back().market_fill.qty = 8;
     fills.back().market_fill.fill_price = 19.5;
-    /*fills.back().market_fill.fills.emplace_back(19,5);
-    fills.back().market_fill.fills.emplace_back(20,3);
-    */
 
     ors.record_processed_orders({fills,{}});
     ors.update_order_records();
@@ -252,8 +220,7 @@ TEST_F(OrderRecordsTest,SplitOrders)
     EXPECT_EQ(ors.completed().at(id).quantities.at(2),0);
     EXPECT_EQ(ors.completed().at(id).states.at(2),OrderState::FILLED);
 
-    /*EXPECT_EQ(ors.completed().at(id).quantities.at(3),0);
-    EXPECT_EQ(ors.completed().at(id).states.at(3),OrderState::REJECTED);*/
+
 
     EXPECT_EQ(ors.completed().at(id).filled_price,19.5);
 }
@@ -320,25 +287,19 @@ TEST_F(OrderRecordsTest,FilledLimitOrders)
     std::vector<order::OrderFills> fills(1);
     fills.back().market_fill.id = 50;
 
-    //fills.emplace_back();
     for (ID id{1}; id  <= 4; ++id)
         fills.back().limit_fills.push_back(id);
 
     ors.record_processed_orders({fills,{}});
     ors.update_order_records();
 
-    /*ors.record_fills(std::move(fills));
-    ors.update_fills();*/
-
     EXPECT_EQ(0,ors.accepted().size());
     EXPECT_EQ(5,ors.completed().size());
 
     for (ID id{1}; id  <= 4; ++id)
-    {
-
         EXPECT_EQ(id, ors.find_order_record(id).id);
-        //EXPECT_EQ(OrderState::FILLED, ors.completed().at(id).states.back());
-    }
+
+
 
     for (ID id{1}; id  <= 4; ++id)
     {

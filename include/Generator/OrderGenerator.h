@@ -15,9 +15,6 @@
 
 #include <random>
 
-
-
-
 #include "Fifo.h"
 #include "OrderBook.h"
 #include "OrderTypes.h"
@@ -48,8 +45,8 @@ namespace gen
 
         void initialize_orderbook(OrderBook<Fifo>& ob,RecordDepot<order::Record>& rd, Qty initial_order_count, Qty max_qty);
         order::Submitted record_order(order::Submitted&& o);
-        order::Submitted make_random_order(OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd, Qty max_qty=10, float sweep_chance =0.1);
-        order::Submitted make_pending_order(OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd, Qty max_qty=10, float sweep_chance =0.1);
+        order::Submitted make_random_order(const OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd, Qty max_qty=10, float sweep_chance =0.1);
+        order::Submitted make_pending_order(const OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd, Qty max_qty=10, float sweep_chance =0.1);
         void print_submitted_stats();
 
     private:

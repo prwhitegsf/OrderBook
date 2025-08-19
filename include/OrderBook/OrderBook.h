@@ -7,7 +7,7 @@
 
 
 #include <numeric>
-#include <iostream>
+
 
 #include "Instrument.h"
 #include "MatcherConcept.h"
@@ -41,26 +41,13 @@
 template<Is_Matcher Matcher>
 class OrderBook {
 
-    Instrument inst_;
-    Price num_prices_;
-    Matcher matcher_;
-
-    Dom d_;
-    Evaluator evaluator_;
-
-    std::queue<order::Submitted> submitted_q_;
-    std::queue<order::Pending> pending_q_;
-
-    std::vector<order::OrderFills> order_fills_;
-    std::vector<order::StateUpdate> order_states_;
-
-
 
 public:
     explicit OrderBook(const Instrument& inst)
     :   inst_(inst), num_prices_(inst_.num_prices_), matcher_(num_prices_),
-        d_(num_prices_, inst_.starting_ask_, inst_.starting_bid_,inst_.protection_),
         order_fills_(1),order_states_(1), // temp fix while designing RingBuffer
+        d_(num_prices_, inst_.starting_ask_, inst_.starting_bid_,inst_.protection_),
+
         evaluator_(d_,pending_q_){}
 
     explicit OrderBook(Instrument&& inst)
@@ -74,10 +61,10 @@ public:
     void submit_order(order::Submitted o);;
 
     /// @ brief determine order validity, update dom, and split order if needed
-    void accept_order();
+    void accept_orders();
 
     /// @brief connects ids and quantities with orders to record transactions/fills
-    void match_order();
+    void match_orders();
 
     /// @brief move processed orders out of OrderBook, typically to Record Depot
     /// @return pair of vectors containing all OrderFills and StateUpdates from last transaction
@@ -115,23 +102,26 @@ public:
 
     void match(auto&& order);
 
-    void match_next_order()
-    {
-        if (!pending_q_.empty())
-        {
-            match(pending_q_.front());
-            pending_q_.pop();
-        }
-    }
+    void match_next_order();
 
 private:
 
+    Instrument inst_;
+    Price num_prices_;
+    Matcher matcher_;
+
+    std::vector<order::OrderFills> order_fills_;
+    std::vector<order::StateUpdate> order_states_;
+
+    Dom d_;
+    Evaluator evaluator_;
+
+    std::queue<order::Submitted> submitted_q_;
+    std::queue<order::Pending> pending_q_;
+
     void push_matched(order::OrderFills&& fills);
     void push_matched(order::StateUpdate&& updates);
-
 };
-
-
 
 
 template <Is_Matcher Matcher>
@@ -141,7 +131,7 @@ void OrderBook<Matcher>::submit_order(order::Submitted o)
 }
 
 template <Is_Matcher Matcher>
-void OrderBook<Matcher>::accept_order()
+void OrderBook<Matcher>::accept_orders()
 {
     while(!submitted_q_.empty())
     {
@@ -157,7 +147,7 @@ void OrderBook<Matcher>::accept_order()
 
 
 template <Is_Matcher Matcher>
-void OrderBook<Matcher>::match_order()
+void OrderBook<Matcher>::match_orders()
 {
     while (!pending_q_.empty())
     {
@@ -266,6 +256,15 @@ void OrderBook<Matcher>::match(auto&& order) {
         push_matched(matcher_.match(o));
 
     },order);
+}
+
+template <Is_Matcher Matcher>
+void OrderBook<Matcher>::match_next_order() {
+    if (!pending_q_.empty())
+    {
+        match(pending_q_.front());
+        pending_q_.pop();
+    }
 }
 
 

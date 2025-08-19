@@ -1,11 +1,7 @@
-//#include <iostream>
-
-#include <ranges>
-
-#include "Printer.h"
 
 #include <thread>
 
+#include "Printer.h"
 #include "OrderGenerator.h"
 #include "Record.h"
 
@@ -28,8 +24,8 @@ int main()
     auto order_book_processing = [&](auto&& o)
     {
         order_book.submit_order(o);
-        order_book.accept_order();
-        order_book.match_order();
+        order_book.accept_orders();
+        order_book.match_orders();
 
     };
 

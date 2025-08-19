@@ -78,7 +78,7 @@ namespace order
         [[nodiscard]] bool is_market_to_limit(Qty fill_qty) const;
         void update_market_limit(const MarketFill& o, const Time& ts);
 
-        void calculate_filled_price(const MarketFill& o);
+
     };
 
     inline bool operator==(const Record& lhs, const Record& rhs)

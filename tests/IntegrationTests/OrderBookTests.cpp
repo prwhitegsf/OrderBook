@@ -2,6 +2,8 @@
 // Created by prw on 8/12/25.
 //
 
+#include <ranges>
+
 #include "gtest/gtest.h"
 
 #include "OrderBook.h"
@@ -26,8 +28,8 @@ public:
     {
         rd.make_order_record(o);
         ob.submit_order(o);
-        ob.accept_order();
-        ob.match_order();
+        ob.accept_orders();
+        ob.match_orders();
         rd.record_processed_orders(std::move(ob.get_processed_orders()));
         rd.update_order_records();
 
@@ -36,7 +38,7 @@ public:
 
 TEST_F(OrderBookTest, BuyLimit)
 {
-    ID id{42};
+    constexpr ID id{42};
 
     process_order(BuyLimit(id,1,49));
 
@@ -50,7 +52,7 @@ TEST_F(OrderBookTest, BuyLimit)
 
 TEST_F(OrderBookTest, SellLimit)
 {
-    ID id{42};
+    constexpr ID id{42};
 
     process_order(SellLimit(id,1,55));
 
@@ -63,7 +65,7 @@ TEST_F(OrderBookTest, SellLimit)
 
 TEST_F(OrderBookTest, BuyLimitReject)
 {
-    ID id{42};
+    constexpr ID id{42};
     process_order(BuyLimit(id,1,75));
 
     EXPECT_EQ(rd.accepted().size(),0);
@@ -81,7 +83,7 @@ TEST_F(OrderBookTest, BuyLimitReject)
 TEST_F(OrderBookTest, SellLimitReject)
 {
 
-    ID id{42};
+    constexpr ID id{42};
     process_order(SellLimit(id,1,25));
 
     EXPECT_EQ(rd.accepted().size(),0);
@@ -427,8 +429,8 @@ TEST_F(OrderBookTest,SelfConsistent_WithUnderflowCheck)
     {
         /// we record each order as it gets processes
         ob1.submit_order(og1.record_order(og1.make_random_order(ob1, rd1,10)));
-        ob1.accept_order();
-        ob1.match_order();
+        ob1.accept_orders();
+        ob1.match_orders();
         rd1.record_processed_orders(std::move(ob1.get_processed_orders()));
         rd1.update_order_records();
 
@@ -437,7 +439,7 @@ TEST_F(OrderBookTest,SelfConsistent_WithUnderflowCheck)
             EXPECT_TRUE( depth < 10000);
     }
 
-    for (auto& [id, rec] : rd1.completed())
+    for (const auto& rec : rd1.completed() | std::views::values)
         EXPECT_TRUE(rec.quantities.back() < 11000);
 
     std::unordered_map<ID,order::Record> accepted_1 = rd1.accepted();
@@ -454,8 +456,8 @@ TEST_F(OrderBookTest,SelfConsistent_WithUnderflowCheck)
         rd2.make_order_record(og1.recorded_orders.front());
         ob2.submit_order(og1.recorded_orders.front());
         og1.recorded_orders.pop();
-        ob2.accept_order();
-        ob2.match_order();
+        ob2.accept_orders();
+        ob2.match_orders();
         rd2.record_processed_orders(std::move(ob2.get_processed_orders()));
         rd2.update_order_records();
 

@@ -39,8 +39,8 @@ namespace gen
             ob.submit_order(orders_q.front());
             orders_q.pop();
 
-            ob.accept_order();
-            ob.match_order();
+            ob.accept_orders();
+            ob.match_orders();
             rd.record_processed_orders(std::move(ob.get_processed_orders()));
             rd.update_order_records();
         }
@@ -56,7 +56,7 @@ namespace gen
     }
 
     order::Submitted OrderGenerator::make_random_order(
-        OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd,
+        const OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd,
         const Qty max_qty, const float sweep_chance)
     {
 
@@ -110,7 +110,7 @@ namespace gen
     }
 
     order::Submitted OrderGenerator::make_pending_order(
-        OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd,
+        const OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd,
         Qty max_qty, float sweep_chance)
     {
         track_min_and_max_prices(ob);
@@ -123,7 +123,7 @@ namespace gen
 
         // to prevent order build up at a single price
         auto too_many_orders = [&]{ return ob.count(price) >= 100; };
-        const unsigned short type = uniform(0,10);
+
 
         order::Submitted o{};
 
@@ -163,7 +163,6 @@ namespace gen
         }
         else // Market orders
         {
-
             o = price >= mid ?
                     make_market_order<order::BuyMarket>(ob, id, max_qty,sweep_chance) :
                     make_market_order<order::SellMarket>(ob, id, max_qty,sweep_chance);

@@ -1,32 +1,30 @@
 //
 // Created by prw on 8/12/25.
-//
-//
-// Created by prw on 7/28/25.
-//
 
-#include "Fifo.h"
+
 #include <vector>
 #include <deque>
-#include <iostream>
+
+#include "Fifo.h"
+
 
 using namespace order;
 
-OrderFills Fifo::match(BuyMarket o) { return market(o,std::plus<>()); };
-OrderFills Fifo::match(SellMarket o) { return market(o,std::minus<>()); }
-OrderFills Fifo::match(BuyMarketLimit o) { return market_limit(o,std::plus<>()); };
-OrderFills Fifo::match(SellMarketLimit o) { return market_limit(o,std::minus<>()); }
-StateUpdate Fifo::match(BuyLimit o) { return limit(Limit(o));}
-StateUpdate Fifo::match(SellLimit o) { return limit(Limit(o));}
+OrderFills Fifo::match(const BuyMarket o) { return market(o,std::plus<>()); };
+OrderFills Fifo::match(const SellMarket o) { return market(o,std::minus<>()); }
+OrderFills Fifo::match(const BuyMarketLimit o) { return market_limit(o,std::plus<>()); };
+OrderFills Fifo::match(const SellMarketLimit o) { return market_limit(o,std::minus<>()); }
+StateUpdate Fifo::match(const BuyLimit o) { return limit(Limit(o));}
+StateUpdate Fifo::match(const SellLimit o) { return limit(Limit(o));}
 
 const Level& Fifo::level(const size_t idx) const { return level_[idx]; }
 
-float Fifo::fill_price(Price price, Qty filled_qty, Qty full_qty) {
+float Fifo::fill_price(const Price price, const Qty filled_qty, const Qty full_qty) {
     return price * (filled_qty / static_cast<float>(full_qty));
 }
 
 
-StateUpdate Fifo::match(Cancel o)
+StateUpdate Fifo::match(const Cancel o)
 {
     // if we find the order, update the depth and order state, otherwise throw
     if (!std::erase_if(level_[o.price].orders,[&](const Limit& ord){ return ord.id == o.id; }))
@@ -38,7 +36,7 @@ StateUpdate Fifo::match(Cancel o)
     return StateUpdate{o.id,OrderState::CANCELLED};
 }
 
-StateUpdate Fifo::match(Rejected o)
+StateUpdate Fifo::match(const Rejected o)
 {
     return StateUpdate{o.id,OrderState::REJECTED};
 }
