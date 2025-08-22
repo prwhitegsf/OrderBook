@@ -66,7 +66,7 @@ namespace gen
 
         void track_min_and_max_prices(const OrderBook<Fifo>&  ob);
         Price generate_price(const OrderBook<Fifo>& ob);
-        Price reactive_price_generation(const OrderBook<Fifo>& ob, const size_t margin);
+        Price reactive_price_generation(const OrderBook<Fifo>& ob, size_t margin);
 
         order::Submitted backfill_bid(const OrderBook<Fifo>& ob, ID id, Qty qty);
         order::Submitted backfill_ask(const OrderBook<Fifo>& ob, ID id, Qty qty);

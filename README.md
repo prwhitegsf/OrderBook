@@ -6,9 +6,17 @@ I'm building this portfolio project in order to develop a better understanding o
 - compile time polymorphism
 - performance testing tools and techniques
 - the performance implications of copy, move and assign operations along with RVO
-- branching vs conditional moves
+- move and value semantics
+- minimizing data dependency in order to move to a multithreaded implementation
 - Assembly
 - CPU caching / performance with varying amounts of data
+
+** Wanting to focus on the above for this project I've left off most of the order functionality that involves holding an order until some future time and resubmitting. This includes:
+- Stop orders 
+- Hidden limit order quantities
+- Orders cancelled at some future time (DAY, GTD)
+
+
 
 ### Run the demo
 
@@ -45,7 +53,7 @@ At it's most basic the project has three modules:
 - the Record Depot
     - tables and access methods allowing us to query processed orders
 
-![img_4.png](docs/img/img_4.png)
+![img.png](docs/img/SimplePath.png)
 
 ### Quick Primer: What's an Order Book? How does it work?
 
@@ -61,7 +69,8 @@ A Limit order is a quantity with a price representing the worst price the partic
 
 The depth of market (dom), is a container holding the total number of contracts available for buying/selling at each price
 
-![img.png](docs/img/img.png)
+![img.png](docs/img/dom.png)
+
 
 The bid and the ask comprise the price of a security at any given moment
 - if you wanted to buy the security right now, you would pay the ask price (102)
@@ -103,8 +112,9 @@ Limit orders whose price falls on the wrong side of the protection price are rej
 
 ![img_3.png](docs/img/img_3.png)
 
-### Order flow
-![img_5.png](docs/img/img_5.png)
+### Order Path Detail
+
+![img.png](docs/img/PathDetail.png)
 
 ### Description of modules
 #### Value Types
@@ -254,3 +264,12 @@ Centers around two hash tables
 Also provides
 - find_order(id) which searches both tables and returns the Record of the passed id
 - last_processed() which returns a set of the order ids processed on the last trade
+
+### Looking ahead
+
+As this project has a performance element, one of the next steps will be moving it towards a multi-threaded version. The image below shows roughly how I envision the work being broken up.
+
+![img.png](docs/img/MultithreadedFuture.png)
+
+The part I'm most concerned with at the moment are threads 2 and 3. This is my conceptual "hot path." 
+

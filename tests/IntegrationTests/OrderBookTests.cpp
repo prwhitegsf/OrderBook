@@ -28,9 +28,9 @@ public:
     {
         rd.make_order_record(o);
         ob.submit_order(o);
-        ob.accept_orders();
+        ob.evaluate_orders();
         ob.match_orders();
-        rd.record_processed_orders(std::move(ob.get_processed_orders()));
+        rd.record_processed_orders(std::move(ob.get_matched_orders()));
         rd.update_order_records();
 
     }
@@ -429,9 +429,9 @@ TEST_F(OrderBookTest,SelfConsistent_WithUnderflowCheck)
     {
         /// we record each order as it gets processes
         ob1.submit_order(og1.record_order(og1.make_random_order(ob1, rd1,10)));
-        ob1.accept_orders();
+        ob1.evaluate_orders();
         ob1.match_orders();
-        rd1.record_processed_orders(std::move(ob1.get_processed_orders()));
+        rd1.record_processed_orders(std::move(ob1.get_matched_orders()));
         rd1.update_order_records();
 
         /// for catching underflows
@@ -456,9 +456,9 @@ TEST_F(OrderBookTest,SelfConsistent_WithUnderflowCheck)
         rd2.make_order_record(og1.recorded_orders.front());
         ob2.submit_order(og1.recorded_orders.front());
         og1.recorded_orders.pop();
-        ob2.accept_orders();
+        ob2.evaluate_orders();
         ob2.match_orders();
-        rd2.record_processed_orders(std::move(ob2.get_processed_orders()));
+        rd2.record_processed_orders(std::move(ob2.get_matched_orders()));
         rd2.update_order_records();
 
     }

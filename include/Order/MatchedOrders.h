@@ -43,7 +43,7 @@ namespace order
     };
 
 
-    using Processed =  std::pair<std::vector<OrderFills>,std::vector<StateUpdate>>;
+    using Matched =  std::pair<std::vector<OrderFills>,std::vector<StateUpdate>>;
 
 }
 

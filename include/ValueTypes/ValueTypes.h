@@ -7,9 +7,9 @@
 
 #include <chrono>
 
-using ID = unsigned int;
-using Qty = unsigned short int;
-using Price = unsigned short int;
+using ID = uint_least32_t;
+using Qty = uint_least16_t;
+using Price = uint_least16_t;
 
 using Time = std::chrono::time_point<std::chrono::high_resolution_clock>;
 using Clock = std::chrono::high_resolution_clock;

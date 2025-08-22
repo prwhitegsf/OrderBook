@@ -35,7 +35,7 @@ public:
         for (int i{}; i < iterations; ++i)
         {
             order_book.submit_order(order_gen.make_pending_order(order_book,record_depot,100));
-            order_book.accept_orders();
+            order_book.evaluate_orders();
 
             if (order_book.bid() <= order_book.min_price() || order_book.ask() >= order_book.max_price())
             {
@@ -76,7 +76,7 @@ static void BM_FifoMatching(benchmark::State& state)
     {
         state.PauseTiming();
         order_book.submit_order(order_gen.make_pending_order(order_book,record_depot,100));
-        order_book.accept_orders();
+        order_book.evaluate_orders();
         state.ResumeTiming();
 
         order_book.match_orders();

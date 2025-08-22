@@ -39,9 +39,9 @@ namespace gen
             ob.submit_order(orders_q.front());
             orders_q.pop();
 
-            ob.accept_orders();
+            ob.evaluate_orders();
             ob.match_orders();
-            rd.record_processed_orders(std::move(ob.get_processed_orders()));
+            rd.record_processed_orders(std::move(ob.get_matched_orders()));
             rd.update_order_records();
         }
 

@@ -11,7 +11,7 @@
 
 #include "Instrument.h"
 #include "MatcherConcept.h"
-#include "ProcessedOrders.h"
+#include "MatchedOrders.h"
 #include "Dom.h"
 #include "Evaluator.h"
 
@@ -61,14 +61,14 @@ public:
     void submit_order(order::Submitted o);;
 
     /// @ brief determine order validity, update dom, and split order if needed
-    void accept_orders();
+    void evaluate_orders();
 
     /// @brief connects ids and quantities with orders to record transactions/fills
     void match_orders();
 
     /// @brief move processed orders out of OrderBook, typically to Record Depot
     /// @return pair of vectors containing all OrderFills and StateUpdates from last transaction
-    order::Processed get_processed_orders();
+    order::Matched get_matched_orders();
 
     //Dom Interface
     /// @return best bid price
@@ -131,7 +131,7 @@ void OrderBook<Matcher>::submit_order(order::Submitted o)
 }
 
 template <Is_Matcher Matcher>
-void OrderBook<Matcher>::accept_orders()
+void OrderBook<Matcher>::evaluate_orders()
 {
     while(!submitted_q_.empty())
     {
@@ -159,7 +159,7 @@ void OrderBook<Matcher>::match_orders()
 
 
 template <Is_Matcher Matcher>
-order::Processed OrderBook<Matcher>::get_processed_orders()
+order::Matched OrderBook<Matcher>::get_matched_orders()
 {
     auto processed = std::make_pair(order_fills_, order_states_);
     order_fills_.back().market_fill.id = 0;

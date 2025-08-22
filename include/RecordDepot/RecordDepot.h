@@ -21,7 +21,7 @@
 
 
 
-#include "ProcessedOrders.h"
+#include "MatchedOrders.h"
 #include "OrderTypes.h"
 
 
@@ -72,7 +72,7 @@ public:
     void make_order_record(order::Submitted o);
     /// @brief gets the OrderFills and StateUpdates from Orderbook and moves them into local containers for processing
     /// @param processed_orders returned by order_book.get_processed_orders()
-    void record_processed_orders(order::Processed&& processed_orders);
+    void record_processed_orders(order::Matched&& processed_orders);
     /// @brief update the records of the orders pulled in by record_processed_orders
     void update_order_records();
 
@@ -102,7 +102,7 @@ void RecordDepot<R>::timestamp()
 }
 
 template <typename R>
-void RecordDepot<R>::record_processed_orders(order::Processed&&  processed_orders)
+void RecordDepot<R>::record_processed_orders(order::Matched&&  processed_orders)
 {
     if (!processed_orders.second.empty() && processed_orders.second.back().id != 0)
         record_states(std::move(processed_orders.second));
