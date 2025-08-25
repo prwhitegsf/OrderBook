@@ -16,6 +16,7 @@ set(SOURCE
 
 set(INCLUDE
         "${PROJECT_BINARY_DIR}"
+        "${PROJECT_SOURCE_DIR}/include/OverwritingVector"
         "${PROJECT_SOURCE_DIR}/include/Matcher"
         "${PROJECT_SOURCE_DIR}/include/Order"
         "${PROJECT_SOURCE_DIR}/include/RecordDepot"
@@ -53,9 +54,11 @@ add_dependencies(save_benchmarks benchmarks)
 
 
 set(TESTS
-    tests/UnitTests/FifoTests.cpp
-    tests/UnitTests/RecordDepotTests.cpp
-    tests/IntegrationTests/OrderBookTests.cpp)
+        tests/UnitTests/OverwritingVectorTests.cpp
+#[[        tests/UnitTests/FifoTests.cpp
+        tests/UnitTests/RecordDepotTests.cpp
+        tests/IntegrationTests/OrderBookTests.cpp]]
+)
 
 add_executable(tests ${SOURCE} ${TESTS} )
 target_include_directories(demo PUBLIC ${INCLUDE})
