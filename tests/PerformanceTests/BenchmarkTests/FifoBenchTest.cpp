@@ -14,7 +14,7 @@
 class FifoBenchTest : public benchmark::Fixture
 {
 public:
-    size_t iterations{1000000};
+    size_t iterations{10000000};
     OrderBook<Fifo> order_book;
     RecordDepot<order::Record> record_depot;
     std::queue<order::Pending> pq;
@@ -64,6 +64,7 @@ BENCHMARK_DEFINE_F(FifoBenchTest, matcherTest)(benchmark::State &state)
 
 
 
+/*
 static void BM_FifoMatching(benchmark::State& state)
 {
     OrderBook<Fifo> order_book(Instrument{});
@@ -82,9 +83,9 @@ static void BM_FifoMatching(benchmark::State& state)
         order_book.match_orders();
 
     }
-}
+}*/
 
 BENCHMARK_REGISTER_F(FifoBenchTest, matcherTest);
-BENCHMARK(BM_FifoMatching);
+//BENCHMARK(BM_FifoMatching);
 
 BENCHMARK_MAIN();

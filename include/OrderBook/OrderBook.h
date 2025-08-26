@@ -45,16 +45,13 @@ class OrderBook {
 public:
     explicit OrderBook(const Instrument& inst)
     :   inst_(inst), num_prices_(inst_.num_prices_), matcher_(num_prices_),
-        order_fills_(1),order_states_(1), // temp fix while designing RingBuffer
         d_(num_prices_, inst_.starting_ask_, inst_.starting_bid_,inst_.protection_),
-
-        evaluator_(d_,pending_q_){}
+        evaluator_(d_,pending_q_), matched_(1){}
 
     explicit OrderBook(Instrument&& inst)
     :   inst_(std::move(inst)), num_prices_(inst_.num_prices_), matcher_(num_prices_),
-        order_fills_(1),order_states_(1),// temp fix while designing RingBuffer
         d_(num_prices_, inst_.starting_ask_, inst_.starting_bid_,inst_.protection_),
-        evaluator_(d_,pending_q_){}
+        evaluator_(d_,pending_q_), matched_(1){}
 
     /// @brief receive order and push to submit queue
     /// @param o incoming order from client api or order generator
@@ -103,25 +100,20 @@ public:
     void match(auto&& order);
 
     void match_next_order();
-    OverwritingVector<order::Matched> matched_;
+
 private:
 
     Instrument inst_;
     Price num_prices_;
     Matcher matcher_;
 
-
-    std::vector<order::Matched> order_fills_;
-    std::vector<order::StateUpdate> order_states_;
-
     Dom d_;
     Evaluator evaluator_;
 
     std::queue<order::Submitted> submitted_q_;
     std::queue<order::Pending> pending_q_;
+    OverwritingVector<order::Matched> matched_;
 
-    void push_matched(order::Matched&& fills);
-    void push_matched(order::StateUpdate&& updates);
 };
 
 
@@ -163,29 +155,8 @@ void OrderBook<Matcher>::match_orders()
 template <Is_Matcher Matcher>
 const OverwritingVector<order::Matched>& OrderBook<Matcher>::get_matched_orders()
 {
-
     return matched_;
-
 }
-
-
-template <Is_Matcher Matcher>
-void OrderBook<Matcher>::push_matched(order::Matched&& fills)
-{
-    // temp fix while designing RingBuffer
-    order_fills_.back() = std::move(fills);
-
-}
-
-template <Is_Matcher Matcher>
-void OrderBook<Matcher>::push_matched(order::StateUpdate&& updates)
-{
-    // temp fix while designing RingBuffer
-    order_states_.back() = updates;
-
-}
-
-
 
 
 template <Is_Matcher Matcher>
@@ -252,12 +223,11 @@ Qty OrderBook<Matcher>::count(Price idx) const {
 template <Is_Matcher Matcher>
 void OrderBook<Matcher>::match(auto&& order)
 {
-    matched_.clear();//should be moved
+    matched_.clear();
+
     std::visit([this](auto&& o)
     {
         matched_.push_back(matcher_.match(o));
-        //std::cout<<matched_.size()<<'\n';
-        //push_matched(matcher_.match(o));
 
     },order);
 }

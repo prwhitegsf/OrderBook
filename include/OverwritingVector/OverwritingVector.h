@@ -24,7 +24,7 @@ public:
     explicit OverwritingVector(const size_t size) : data_(size) {}
 
 
-   // OverwritingVector(const OverwritingVector& other) : data_(other.data_), end_(other.end_) {}
+    //OverwritingVector(const OverwritingVector& other) : data_(other.data_), end_(other.end_) {}
     auto begin()const { return data_.begin(); }
     auto end() const { return data_.begin() + end_; }
 
@@ -46,12 +46,17 @@ public:
     bool empty() const { return end_ == 0; }
     void clear() { end_ = 0; }
 
-
+    /*T& operator[](const size_t idx)
+    {
+        return data_[idx];
+    }*/
 
     void push_back(const T& item)
     {
         if (end_ >= data_.size()) // trigger vector resize
         {
+
+            //data_[end_] = item;
             data_.push_back(item);
         }
         else

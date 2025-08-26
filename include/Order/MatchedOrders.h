@@ -45,6 +45,19 @@ namespace order
 
         Matched() : limit_fills(8) {}
 
+        /*Matched(const Matched& other)
+            : partial_fill(other.partial_fill), market_fill(other.market_fill), state_update(other.state_update)
+        {
+            if (!other.limit_fills.empty())
+            {
+                limit_fills.clear();
+                for (auto id : other.limit_fills)
+                    if (id)
+                        limit_fills.push_back(id);
+            }
+            else
+                limit_fills.clear();
+        }*/
         Matched& operator=(const Matched& other)
         {
             if (this != &other)
@@ -66,6 +79,7 @@ namespace order
 
             return *this;
         }
+
 
         void clear()
         {
