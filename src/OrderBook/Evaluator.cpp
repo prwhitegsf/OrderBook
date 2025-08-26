@@ -57,14 +57,11 @@ void Evaluator::evaluate_order(order::BuyLimit o) const
             next_non_zero_ask();
             push_accepted(o);
         }
-        else // but if we reached limit, place the remaining qty on the book as a limit order
+        else // but if we reached limit, convert to market limit
         {
             d_.bid = limit;
             set_depth(d_.bid, qty);
-
-            // Split the order into it's market and limit components
             push_accepted(order::BuyMarketLimit(o.id,o.qty - d_.dom[d_.bid],o.price,d_.dom[d_.bid],d_.bid));
-           // push_accepted(order::BuyLimit(o.id,d_.dom[d_.bid],d_.bid));
         }
     }
 }
@@ -114,13 +111,11 @@ void Evaluator::evaluate_order(order::BuyLimit o) const
             next_non_zero_bid();
             push_accepted(o);
         }
-        else // but if we reached limit, place the remaining qty on the book as a limit order
+        else // but if we reached limit, convert to market limit
         {
             d_.ask = limit;
             set_depth(d_.ask, qty);
-            // Split the order into it's market and limit components
             push_accepted(order::SellMarketLimit(o.id,o.qty - d_.dom[d_.ask],o.price, d_.dom[d_.ask],d_.ask));
-           // push_accepted(order::SellLimit(o.id,d_.dom[d_.ask],d_.ask));
         }
     }
 }

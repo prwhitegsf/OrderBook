@@ -43,6 +43,7 @@ TEST_F(OrderBookTest, BuyLimit)
     process_order(BuyLimit(id,1,49));
 
     EXPECT_EQ(ob.depth(49),1);
+    EXPECT_EQ(ob.count(49),1);
     EXPECT_EQ(rd.accepted().at(id).id, id);
     EXPECT_EQ(rd.accepted().at(id).limit_price, 49);
     EXPECT_EQ(rd.accepted().at(id).quantities.back(), 1);

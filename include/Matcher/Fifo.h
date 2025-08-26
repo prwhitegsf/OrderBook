@@ -46,15 +46,38 @@ public:
 
 
 private:
+
     std::vector<Level> level_;
     order::Matched matched_;
+
+    void reset_matched(ID id, Qty qty)
+    {
+        matched_.limit_fills.clear();
+
+        matched_.market_fill.id = id;
+        matched_.market_fill.qty = qty;
+        matched_.market_fill.fill_price = 0;
+
+        matched_.partial_fill.id = 0;
+        matched_.state_update.id = 0;
+    }
+
+
+    void reset_matched()
+    {
+        matched_.limit_fills.clear();
+        matched_.market_fill.id = 0;
+        matched_.partial_fill.id = 0;
+        matched_.state_update.id = 0;
+    }
+
     const order::Matched& limit(auto o);
     const order::Matched& market(auto o, auto&& dir);
     const order::Matched& market_limit(auto o, auto&& dir);
     int fill_level(auto& o);
     int fill_orders(auto& o);
     int fill_remaining(auto& o);
-    double fill_price(Price price, Qty filled_qty, Qty full_qty);
+    static double fill_price(Price price, Qty filled_qty, Qty full_qty);
 };
 
 

@@ -142,7 +142,6 @@ void OrderBook<Matcher>::evaluate_orders()
 template <Is_Matcher Matcher>
 void OrderBook<Matcher>::match_orders()
 {
-    //matched_.clear();//should be moved
     while (!pending_q_.empty())
     {
         match(pending_q_.front());
@@ -151,6 +150,27 @@ void OrderBook<Matcher>::match_orders()
     }
 }
 
+template <Is_Matcher Matcher>
+void OrderBook<Matcher>::match(auto&& order)
+{
+    matched_.clear();
+
+    std::visit([this](auto&& o)
+    {
+        matched_.push_back(matcher_.match(o));
+
+    },order);
+}
+
+template <Is_Matcher Matcher>
+void OrderBook<Matcher>::match_next_order() {
+
+    if (!pending_q_.empty())
+    {
+        match(pending_q_.front());
+        pending_q_.pop();
+    }
+}
 
 template <Is_Matcher Matcher>
 const OverwritingVector<order::Matched>& OrderBook<Matcher>::get_matched_orders()
@@ -220,27 +240,7 @@ Qty OrderBook<Matcher>::count(Price idx) const {
     return matcher_.level(idx).count();
 }
 
-template <Is_Matcher Matcher>
-void OrderBook<Matcher>::match(auto&& order)
-{
-    matched_.clear();
 
-    std::visit([this](auto&& o)
-    {
-        matched_.push_back(matcher_.match(o));
-
-    },order);
-}
-
-template <Is_Matcher Matcher>
-void OrderBook<Matcher>::match_next_order() {
-
-    if (!pending_q_.empty())
-    {
-        match(pending_q_.front());
-        pending_q_.pop();
-    }
-}
 
 
 #endif //ORDERBOOK_ORDERBOOK_H

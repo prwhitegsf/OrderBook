@@ -37,7 +37,8 @@ class RecordDepot
     std::unordered_map<ID,R> accepted_;
     std::unordered_map<ID,R> completed_;
 
-    std::vector<order::StateUpdate> order_states_;
+    OverwritingVector<order::Matched> matched_;
+
     std::unordered_set<ID> last_processed_;
 
     Time ts_;
@@ -52,16 +53,16 @@ class RecordDepot
     ID process_state_update(order::StateUpdate o);
 
 public:
-    OverwritingVector<order::Matched> matched_;
-    ///
+
+
     /// @return reference to table of unfilled, but accepted orders, includes partial fills
     const std::unordered_map<ID,R>& accepted() const;
+
     /// @return reference to table of filled / completed orders, includes cancelled and rejected orders
     const std::unordered_map<ID,R>& completed() const;
 
     /// @return a list with the IDs of all orders changed in the last transaction
     std::unordered_set<ID> last_processed();
-
 
     /// @param id desired order id
     /// @return a copy of the order record
@@ -71,15 +72,12 @@ public:
     /// @param o incoming order
     void make_order_record(order::Submitted o);
 
-
+    /// @brief copies matched orders from orderbook to local vector
+    /// @param matched container in orderbook
     void record_matched_orders(const OverwritingVector<order::Matched>& matched);
 
-
-
-    /// @brief update the records of the orders pulled in by record_processed_orders
+    /// @brief update the records of the orders pulled in by record_matched_orders
     void update_order_records();
-
-
 
 };
 
@@ -93,7 +91,6 @@ const std::unordered_map<ID,R>& RecordDepot<R>::completed() const {return comple
 template<typename R>
 R RecordDepot<R>::find_order_record(const ID id)
 {
-
     if (accepted_.contains(id)) return accepted_[id];
     if (completed_.contains(id)) return completed_[id];
     return  {};
@@ -110,8 +107,6 @@ void RecordDepot<R>::record_matched_orders(const OverwritingVector<order::Matche
 {
     for (const auto& m : matched)
         matched_.push_back(m);
-
-    //std::cout<<"Rec matched size: "<<matched[0].limit_fills.size()<<std::endl;
 }
 
 
@@ -121,14 +116,13 @@ void RecordDepot<R>::make_order_record(order::Submitted o) {
     std::visit([this](auto& ord)
    {
        accepted_.emplace(ord.id,R(ord));
-
    },o);
 }
 
 
 template<typename R>
-void RecordDepot<R>::update_order_records() {
-
+void RecordDepot<R>::update_order_records()
+{
     timestamp();
     update_matched();
     matched_.clear();
@@ -141,11 +135,7 @@ void RecordDepot<R>::update_matched()
 {
     for (const auto& [limit, partial,market,state] : matched_)
     {
-        if (state.id)
-        {
-            last_processed_.insert(process_state_update(std::move(state)));
-        }
-        for (ID id : limit)
+        for (const ID id : limit)
             last_processed_.insert(process_limit_fills(id));
 
         if (partial.id)
@@ -154,8 +144,8 @@ void RecordDepot<R>::update_matched()
         if (market.id)
             last_processed_.insert(process_market_fill(std::move(market)));
 
-
-
+        if (state.id)
+            last_processed_.insert(process_state_update(std::move(state)));
     }
 }
 
@@ -194,6 +184,7 @@ ID RecordDepot<R>::process_market_fill(order::MarketFill o)
     {
         accepted_[o.id].update_market_limit(o,ts_);
     }
+
     return o.id;
 }
 
@@ -206,6 +197,7 @@ ID RecordDepot<R>::process_state_update(order::StateUpdate o)
     {
         completed_.insert(std::move(accepted_.extract(o.id)));
     }
+
     return o.id;
 }
 

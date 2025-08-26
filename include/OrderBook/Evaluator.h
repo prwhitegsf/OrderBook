@@ -22,7 +22,7 @@ class Evaluator
 {
     Dom& d_;
     std::queue<order::Pending>& pending_q_;
-    //std::vector<order::StateUpdate>& state_update_q_;
+
 
     void set_depth(Price price, Qty depth) const;
     void add_depth(Price price, Qty depth) const;

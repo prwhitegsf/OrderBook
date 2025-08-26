@@ -20,7 +20,7 @@ const order::Matched& Fifo::match(const SellLimit o) { return limit(Limit(o));}
 const Level& Fifo::level(const size_t idx) const { return level_[idx]; }
 
 double Fifo::fill_price(const Price price, const Qty filled_qty, const Qty full_qty) {
-    return price * (filled_qty / static_cast<double>(full_qty));
+    return price * (filled_qty / static_cast<float>(full_qty));
 }
 
 
@@ -32,7 +32,7 @@ const order::Matched& Fifo::match(const Cancel o)
         throw(std::invalid_argument("Cancelled order not found at price"));
     }
 
-    matched_.clear();
+    reset_matched();
     level_[o.price].depth -= o.qty;
     matched_.state_update = {o.id,OrderState::CANCELLED};
 
@@ -41,7 +41,7 @@ const order::Matched& Fifo::match(const Cancel o)
 
 const order::Matched& Fifo::match(const Rejected o)
 {
-    matched_.clear();
+    reset_matched();
     matched_.state_update = {o.id,OrderState::REJECTED};
     return matched_;
 }
@@ -49,7 +49,7 @@ const order::Matched& Fifo::match(const Rejected o)
 const order::Matched& Fifo::limit(auto o)
 {
     // Limit orders are just placed into the level
-    matched_.clear();
+    reset_matched();
     level_[o.price].orders.emplace_back(o);
     level_[o.price].depth += o.qty;
     matched_.state_update = {o.id,OrderState::ACCEPTED};
@@ -60,10 +60,7 @@ const order::Matched& Fifo::limit(auto o)
 
 const order::Matched& Fifo::market_limit(auto o, auto&& dir)
 {
-    matched_.clear();
-    matched_.market_fill.id = o.id;
-    matched_.market_fill.qty = o.qty; // our original qty for market portion
-    matched_.market_fill.fill_price = 0;
+    reset_matched(o.id,o.qty);
     const Qty full_qty = o.qty + o.limit_qty;
     matched_.market_fill.limit = o.limit_price;
 
@@ -74,46 +71,20 @@ const order::Matched& Fifo::market_limit(auto o, auto&& dir)
         o.qty -= level_[o.price].depth;
         fill_level(o);
     }
-    /*for (;o.qty > level_[o.price].depth; o.price = dir(o.price,1))
-    {
-        matched_.market_fill.fill_price += fill_price(o.price,level_[o.price].depth,full_qty);
-        o.qty -= level_[o.price].depth;
-        fill_level(o);
-    }*/
-
 
     fill_level(o);
     matched_.market_fill.fill_price += fill_price(o.limit_price,o.qty+o.limit_qty,full_qty);
 
-    // Remaining orders are filled at the current price
-    /*matched_.market_fill.fill_price += matched_.market_fill.fill_price == 0 ?
-        o.price : fill_price(o.price,o.qty + o.limit_qty,full_qty);*/
     level_[o.limit_price].orders.emplace_back(o.id,o.limit_qty,o.limit_price);
-
     level_[o.limit_price].depth = o.limit_qty;
-    /*// take orders in full
-    while (!level_[o.price].orders.empty() && o.qty > level_[o.price].orders.front().qty)
-    {
-        o.qty -=  level_[o.price].orders.front().qty;
-        fill_orders(o);
-    }
-
-    // take partial order
-    if (o.qty)
-    {
-        fill_remaining(o);
-    }*/
-
 
     return matched_;
 }
 
 const order::Matched& Fifo::market(auto o, auto&& dir)
 {
-    matched_.clear();
-    matched_.market_fill.id = o.id;
-    matched_.market_fill.qty = o.qty;
-    matched_.market_fill.fill_price = 0;
+    reset_matched(o.id,o.qty);
+
     // Market order takes all the available liquidity at current the level at once
     for (;o.qty > level_[o.price].depth; o.price = dir(o.price,1))
     {
@@ -128,6 +99,7 @@ const order::Matched& Fifo::market(auto o, auto&& dir)
     matched_.market_fill.fill_price += matched_.market_fill.fill_price == 0 ?
         o.price : fill_price(o.price,o.qty,matched_.market_fill.qty);
 
+    // for our record, we use the last price we executed at as the "limit" price
     matched_.market_fill.limit = o.price;
 
     // take orders in full

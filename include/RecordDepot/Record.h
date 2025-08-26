@@ -90,7 +90,7 @@ namespace order
             && lhs.states == rhs.states;
     }
 
-
+    // GCOVR_EXCL_START
     inline std::ostream& operator<<(std::ostream& os, const Record& o)
     {
         Qty prev_quantity = o.quantities.size() >= 2 ? o.quantities[o.quantities.size()-2] : o.quantities.back();
@@ -98,7 +98,7 @@ namespace order
         << std::format("{:<5} {:<16} {:<9} {:>5} {:>5} {:>8} {:>10.2f}",
                 o.id, o.type,OrderStateToString(o.states.back()),prev_quantity,o.quantities.back(),o.limit_price,o.filled_price);
         return os;
-    }
+    }// GCOVR_EXCL_STOP
 
     inline std::ostream& record_header(std::ostream& os)
     {
