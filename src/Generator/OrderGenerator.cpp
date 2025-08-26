@@ -41,7 +41,7 @@ namespace gen
 
             ob.evaluate_orders();
             ob.match_orders();
-            rd.record_processed_orders(std::move(ob.get_matched_orders()));
+            rd.record_matched_orders(ob.get_matched_orders());
             rd.update_order_records();
         }
 

@@ -48,6 +48,8 @@ namespace order
         Qty qty;
         Price price;
 
+        Order(ID id_t, Qty qty_t, Price price_t) : id(id_t), qty(qty_t), price(price_t) {}
+
         explicit Order(const Order<BUY,LIMIT> o)
             : id(o.id), qty(o.qty), price(o.price){}
 

@@ -28,7 +28,7 @@ set(INCLUDE
 
 
 
-add_executable(demo demo.cpp ${SOURCE})
+add_executable(demo demo.cpp  ${SOURCE})
 target_include_directories(demo PUBLIC ${INCLUDE} "${PROJECT_SOURCE_DIR}/include/Printer" )
 
 
@@ -54,10 +54,12 @@ add_dependencies(save_benchmarks benchmarks)
 
 
 set(TESTS
-        tests/UnitTests/OverwritingVectorTests.cpp
-#[[        tests/UnitTests/FifoTests.cpp
+
         tests/UnitTests/RecordDepotTests.cpp
-        tests/IntegrationTests/OrderBookTests.cpp]]
+           tests/UnitTests/OverwritingVectorTests.cpp
+            tests/UnitTests/FifoTests.cpp
+           tests/UnitTests/RecordDepotTests.cpp
+        tests/IntegrationTests/OrderBookTests.cpp
 )
 
 add_executable(tests ${SOURCE} ${TESTS} )

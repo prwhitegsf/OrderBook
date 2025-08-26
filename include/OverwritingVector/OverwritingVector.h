@@ -6,10 +6,13 @@
 #define ORDERBOOK_OVERWRITINGVECTOR_H
 
 #include <vector>
+#include <ranges>
 #include <span>
+#include <iostream>
+
 
 template<typename T>
-class OverwritingVector
+class OverwritingVector : public std::ranges::view_interface<OverwritingVector<T>>
 {
     std::vector<T> data_;
 
@@ -20,7 +23,12 @@ public:
     OverwritingVector() = default;
     explicit OverwritingVector(const size_t size) : data_(size) {}
 
-    const T& operator[](const size_t index) const { return data_[index]; }
+
+   // OverwritingVector(const OverwritingVector& other) : data_(other.data_), end_(other.end_) {}
+    auto begin()const { return data_.begin(); }
+    auto end() const { return data_.begin() + end_; }
+
+    //const T& operator[](const size_t index) const { return data_[index]; }
 
     OverwritingVector& operator=(const OverwritingVector& other)
     {
@@ -35,7 +43,6 @@ public:
     }
 
     size_t capacity() const { return data_.size(); }
-    size_t size() const { return end_; }
     bool empty() const { return end_ == 0; }
     void clear() { end_ = 0; }
 
@@ -49,6 +56,7 @@ public:
         }
         else
         {
+
             data_[end_] = item;
         }
 

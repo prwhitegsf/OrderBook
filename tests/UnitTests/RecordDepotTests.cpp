@@ -31,6 +31,7 @@ TEST_F(OrderRecordsTest, MakeRecord)
 }
 
 
+
 TEST_F(OrderRecordsTest, StateUpdatesNoMove)
 {
     ors.make_order_record(BuyLimit(1,5,9));
@@ -41,18 +42,24 @@ TEST_F(OrderRecordsTest, StateUpdatesNoMove)
     for (int id{1}; id <= 4; ++id)
         EXPECT_EQ(OrderState::SUBMITTED, ors.accepted().at(id).states.back());
 
-    std::vector<StateUpdate> state_updates({StateUpdate{1,OrderState::ACCEPTED}});
+    Matched m;
+    m.state_update = {1,OrderState::ACCEPTED};
+    OverwritingVector<Matched> matched(1);
+    matched.push_back(m);
 
+    ors.record_matched_orders(matched);
+    matched.clear();
 
-    ors.record_processed_orders({{},state_updates});
     ors.update_order_records();
     EXPECT_EQ(OrderState::ACCEPTED, ors.accepted().at(1).states.back());
 
-    state_updates.back() = StateUpdate{2,OrderState::PENDING};
-    ors.record_processed_orders({{},state_updates});
+    m.state_update = {2,OrderState::PENDING};
+    matched.push_back(m);
+    ors.record_matched_orders(matched);
+    matched.clear();
+
     ors.update_order_records();
     EXPECT_EQ(OrderState::PENDING, ors.accepted().at(2).states.back());
-
 
 }
 
@@ -65,7 +72,6 @@ TEST_F(OrderRecordsTest,StateUpdateWithMove)
     // when they're no longer in the market
     // Rejected, Cancelled orders happen here
     // Fills are another function
-
 
     ors.make_order_record(BuyLimit(1,5,9));
     ors.make_order_record(BuyLimit(2,10,10));
@@ -80,23 +86,37 @@ TEST_F(OrderRecordsTest,StateUpdateWithMove)
     EXPECT_EQ(ors.accepted().size(),4); // everything is in the accepted table
     EXPECT_EQ(ors.completed().size(),0); // nothing in the executed table
 
-    std::vector<StateUpdate> state_updates({
-        StateUpdate{1,OrderState::CANCELLED},
-        StateUpdate{2,OrderState::REJECTED},
-        StateUpdate{3,OrderState::CANCELLED},
-        StateUpdate{4,OrderState::REJECTED}});
+    OverwritingVector<Matched> matched(4);
 
-    ors.record_processed_orders({{},state_updates});
+    EXPECT_EQ(matched.size(),0);
+    EXPECT_EQ(matched.capacity(),4);
+    for (ID i{1}; i <= 2; ++i)
+    {
+        Matched m;
+        m.state_update = {i,OrderState::CANCELLED};
+        matched.push_back(m);
+    }
+    for (ID i{3}; i <= 4; ++i)
+    {
+        Matched m;
+        m.state_update = {i,OrderState::REJECTED};
+        matched.push_back(m);
+    }
+
+    ors.record_matched_orders(matched);
+    EXPECT_EQ(matched.size(),4);
+    matched.clear();
+
     ors.update_order_records();
 
     EXPECT_EQ(ors.completed().size(),4); // now the orders are in the executed table
     EXPECT_EQ(ors.accepted().size(),0); // and removed from accepted
 
-    EXPECT_EQ(OrderState::CANCELLED, ors.completed().at(1).states.back());
-    EXPECT_EQ(OrderState::REJECTED, ors.completed().at(2).states.back());
-    EXPECT_EQ(OrderState::CANCELLED, ors.completed().at(3).states.back());
-    EXPECT_EQ(OrderState::REJECTED, ors.completed().at(4).states.back());
 
+    EXPECT_EQ(OrderState::CANCELLED, ors.completed().at(1).states.back());
+    EXPECT_EQ(OrderState::CANCELLED, ors.completed().at(2).states.back());
+    EXPECT_EQ(OrderState::REJECTED, ors.completed().at(3).states.back());
+    EXPECT_EQ(OrderState::REJECTED, ors.completed().at(4).states.back());
 
 }
 
@@ -107,13 +127,14 @@ TEST_F(OrderRecordsTest, ProcessBuyMarket)
     ors.make_order_record(BuyMarket(id,10,20));
     EXPECT_EQ(ors.accepted().size(),1);
 
-    std::vector<order::OrderFills> fills(1);
+    Matched m;
+    m.market_fill.id = id;
+    m.market_fill.qty = 10;
+    m.market_fill.fill_price = 20;
+    OverwritingVector<order::Matched> matched(1);
+    matched.push_back(m);
 
-    fills.back().market_fill.id = id;
-    fills.back().market_fill.qty = 10;
-    fills.back().market_fill.fill_price = 20;
-
-    ors.record_processed_orders({fills,{}});
+    ors.record_matched_orders(matched);
     ors.update_order_records();
 
 
@@ -128,20 +149,31 @@ TEST_F(OrderRecordsTest, FindRecord)
 {
     constexpr ID id{1};
     ors.make_order_record(BuyLimit(id,5,10));
+
     // find in accepted
     EXPECT_EQ(ors.accepted().size(),1);
     auto  o = ors.find_order_record(1); // finding in accepted
 
     EXPECT_EQ(o.id,id);
 
-    std::vector<order::OrderFills> fills(1);
-    fills.back().limit_fills.push_back(id);
+    // simulate fill
+    Matched m;
+    m.limit_fills.push_back(id);
+    OverwritingVector<order::Matched> matched(1);
+    matched.push_back(m);
+    EXPECT_EQ(matched[0].limit_fills.size(),1);
+
+    ors.record_matched_orders(matched);
+    ors.update_order_records();
+
+    EXPECT_EQ(ors.accepted().size(),0);
+    EXPECT_EQ(ors.completed().size(), 1);
+    o = ors.find_order_record(1); // finding in accepted
+    EXPECT_EQ(o.id, id);
 
     // unfound order
     auto ufo = ors.find_order_record(2);
     EXPECT_EQ(ufo.id,0);
-
-
 }
 
 
@@ -169,14 +201,19 @@ TEST_F(OrderRecordsTest,SplitOrders)
 
     // it's split: 8 filled at market, 5 @ 19, 3 @ 20
     // and two remain on the book as buy limits at 20
-    std::vector<order::OrderFills> fills(1);
-    fills.back().market_fill.id = id;
-    fills.back().market_fill.qty = 8;
-    fills.back().market_fill.fill_price = 19.5;
+    Matched m;
+    OverwritingVector<order::Matched> matched(1);
+    m.market_fill.id = id;
+    m.market_fill.qty = 8;
+    m.market_fill.fill_price = 19.5;
 
-    ors.record_processed_orders({fills,{}});
+    matched.push_back(m);
+
+
+    ors.record_matched_orders(matched);
     ors.update_order_records();
-    fills.clear(); // we do this manually, ob provides its own cleanup
+    m.clear();
+    matched.clear();
 
     EXPECT_EQ(ors.accepted().at(id).states.size(),2);
     EXPECT_EQ(ors.accepted().at(id).quantities.size(),2);
@@ -192,13 +229,17 @@ TEST_F(OrderRecordsTest,SplitOrders)
 
 
     // Now simulate the remaining order being filled
-    fills.emplace_back();
-    fills.back().market_fill.id = 50;
-    fills.back().market_fill.qty = 2;
-    fills.back().market_fill.fill_price = 20;
-    fills.back().limit_fills.push_back(id);
 
-    ors.record_processed_orders({fills,{}});
+
+    m.market_fill.id = 50;
+    m.market_fill.qty = 2;
+    m.market_fill.fill_price = 20;
+    m.limit_fills.push_back(id);
+
+    matched.push_back(m);
+    EXPECT_EQ(matched.size(),1);
+
+    ors.record_matched_orders(matched);
     ors.update_order_records();
     EXPECT_EQ(ors.last_processed().size(),2);
 
@@ -238,39 +279,46 @@ TEST_F(OrderRecordsTest,PartialFills)
     for (ID id{1}; id <= 4; ++id)
         EXPECT_EQ(5, ors.accepted().at(id).quantities.back());
 
-    std::vector<order::OrderFills> fills(1);
-    fills.back().market_fill.id = 50;
-    fills.back().partial_fill.id = 1;
-    fills.back().partial_fill.qty = static_cast<Qty>(1);
+    OverwritingVector<order::Matched> matched(1);
+    Matched m;
+    m.market_fill.id = 50;
+    m.partial_fill.id = 1;
+    m.partial_fill.qty = static_cast<Qty>(1);
 
-    ors.record_processed_orders({fills,{}});
+    matched.push_back(m);
+    ors.record_matched_orders(matched);
+    m.clear();
+    matched.clear();
     ors.update_order_records();
 
     EXPECT_EQ(4, ors.accepted().at(1).quantities.back());
     EXPECT_EQ(OrderState::PARTIAL, ors.accepted().at(1).states.back());
 
-    fills.back().market_fill.id = 51;
-    fills.back().partial_fill.id = 2;
-    fills.back().partial_fill.qty = static_cast<Qty>(2);
 
-    ors.record_processed_orders({fills,{}});
+    m.market_fill.id = 51;
+    m.partial_fill.id = 2;
+    m.partial_fill.qty = static_cast<Qty>(2);
+    matched.push_back(m);
+    ors.record_matched_orders(matched);
+    m.clear();
+    matched.clear();
     ors.update_order_records();
 
     EXPECT_EQ(3, ors.accepted().at(2).quantities.back());
     EXPECT_EQ(OrderState::PARTIAL, ors.accepted().at(2).states.back());
 
-    fills.back().market_fill.id = 52;
-    fills.back().partial_fill.id = 3;
-    fills.back().partial_fill.qty = static_cast<Qty>(3);
+    m.market_fill.id = 52;
+    m.partial_fill.id = 3;
+    m.partial_fill.qty = static_cast<Qty>(3);
 
-    ors.record_processed_orders({fills,{}});
+    matched.push_back(m);
+    ors.record_matched_orders(matched);
     ors.update_order_records();
 
     EXPECT_EQ(2, ors.accepted().at(3).quantities.back());
     EXPECT_EQ(OrderState::PARTIAL, ors.accepted().at(3).states.back());
-
-
 }
+
 TEST_F(OrderRecordsTest,FilledLimitOrders)
 {
     ors.make_order_record(BuyLimit(1,5,1));
@@ -284,13 +332,16 @@ TEST_F(OrderRecordsTest,FilledLimitOrders)
     for (ID id{1}; id <= 4; ++id)
         EXPECT_EQ(5, ors.accepted().at(id).quantities.back());
 
-    std::vector<order::OrderFills> fills(1);
-    fills.back().market_fill.id = 50;
+    OverwritingVector<order::Matched> matched(1);
+    Matched m;
+    m.market_fill.id = 50;
 
     for (ID id{1}; id  <= 4; ++id)
-        fills.back().limit_fills.push_back(id);
+        m.limit_fills.push_back(id);
 
-    ors.record_processed_orders({fills,{}});
+    matched.push_back(m);
+
+    ors.record_matched_orders(matched);
     ors.update_order_records();
 
     EXPECT_EQ(0,ors.accepted().size());

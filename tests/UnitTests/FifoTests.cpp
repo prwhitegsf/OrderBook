@@ -38,61 +38,59 @@ public:
 TEST_F(FifoTests,BuyLimit)
 {
 
-    auto o = fifo.match(BuyLimit(42,1,5));
+    auto m = fifo.match(BuyLimit(42,1,5));
 
     EXPECT_EQ(fifo.level(5).depth, 1);
     EXPECT_EQ(fifo.level(5).count(), 1);
     EXPECT_EQ(fifo.level(5).orders.front().id, 42);
     EXPECT_EQ(fifo.level(5).orders.front().qty, 1);
-    EXPECT_EQ(o.id, 42);
+    EXPECT_EQ(m.state_update.id, 42);
 
 }
 
 TEST_F(FifoTests,SellLimit)
 {
-   // Fifo fifo(10);
-    auto o = fifo.match(SellLimit(42,1,5));
+    auto m = fifo.match(SellLimit(42,1,5));
 
     EXPECT_EQ(fifo.level(5).depth, 1);
     EXPECT_EQ(fifo.level(5).orders.front().id, 42);
     EXPECT_EQ(fifo.level(5).orders.front().qty, 1);
-    EXPECT_EQ(o.id, 42);
+    EXPECT_EQ(m.state_update.id, 42);
 }
+
 
 TEST_F(FifoTests,BuyMarket)
 {
-  //  Fifo fifo(10);
     fifo.match(SellLimit(42,2,5));
     EXPECT_EQ(fifo.level(5).orders.front().id, 42);
     EXPECT_EQ(fifo.level(5).orders.front().qty, 2);
 
-    auto fills = fifo.match(BuyMarket(43,2,4));
+    const auto matched = fifo.match(BuyMarket(43,2,4));
 
     EXPECT_EQ(fifo.level(5).depth, 0);
-    EXPECT_EQ(fills.limit_fills.back(), 42);
+    EXPECT_EQ(matched.limit_fills.back(), 42);
 
-    EXPECT_EQ(fills.market_fill.id, 43);
-    EXPECT_EQ(fills.market_fill.qty, 2);
-    EXPECT_EQ(fills.market_fill.fill_price, 5);
-
+    EXPECT_EQ(matched.market_fill.id, 43);
+    EXPECT_EQ(matched.market_fill.qty, 2);
+    EXPECT_EQ(matched.market_fill.fill_price, 5);
 }
 
 TEST_F(FifoTests,SellMarket)
 {
-  //  Fifo fifo(10);
+
     fifo.match(BuyLimit(42,2,5));
     EXPECT_EQ(fifo.level(5).orders.front().id, 42);
     EXPECT_EQ(fifo.level(5).orders.front().qty, 2);
 
-    auto fills = fifo.match(SellMarket(43,2,6));
+    const auto matched = fifo.match(SellMarket(43,2,6));
 
     EXPECT_EQ(fifo.level(5).depth, 0);
 
-    EXPECT_EQ(fills.limit_fills.back(), 42);
+    EXPECT_EQ(matched.limit_fills.back(), 42);
 
-    EXPECT_EQ(fills.market_fill.id, 43);
-    EXPECT_EQ(fills.market_fill.qty, 2);
-    EXPECT_EQ(fills.market_fill.fill_price, 5);
+    EXPECT_EQ(matched.market_fill.id, 43);
+    EXPECT_EQ(matched.market_fill.qty, 2);
+    EXPECT_EQ(matched.market_fill.fill_price, 5);
 
 }
 
@@ -105,38 +103,37 @@ TEST_F(FifoTests,BuyMarketPartial)
     EXPECT_EQ(fifo.level(5).orders.front().qty, 2);
     EXPECT_EQ(fifo.level(5).depth, 2);
 
-    auto fills =fifo.match(BuyMarket(43,1,4));
+    const auto matched =fifo.match(BuyMarket(43,1,4));
 
     EXPECT_EQ(fifo.level(5).depth, 1);
     EXPECT_EQ(fifo.level(5).orders.front().qty, 1);
-    EXPECT_EQ(fills.partial_fill.id, 42);
-    EXPECT_EQ(fills.partial_fill.qty, 1);
+    EXPECT_EQ(matched.partial_fill.id, 42);
+    EXPECT_EQ(matched.partial_fill.qty, 1);
 
-    EXPECT_EQ(fills.market_fill.id, 43);
-    EXPECT_EQ(fills.market_fill.qty, 1);
-    EXPECT_EQ(fills.market_fill.fill_price, 5);
-
+    EXPECT_EQ(matched.market_fill.id, 43);
+    EXPECT_EQ(matched.market_fill.qty, 1);
+    EXPECT_EQ(matched.market_fill.fill_price, 5);
 }
 
 
 TEST_F(FifoTests,SellMarketPartial)
 {
-   // Fifo fifo(10);
+
     fifo.match(BuyLimit(42,2,5));
     EXPECT_EQ(fifo.level(5).orders.front().id, 42);
     EXPECT_EQ(fifo.level(5).orders.front().qty, 2);
     EXPECT_EQ(fifo.level(5).depth, 2);
 
-     auto fills = fifo.match(SellMarket(43,1,6));
+     const auto matched = fifo.match(SellMarket(43,1,6));
 
     EXPECT_EQ(fifo.level(5).depth, 1);
     EXPECT_EQ(fifo.level(5).orders.front().qty, 1);
-    EXPECT_EQ(fills.partial_fill.id, 42);
-    EXPECT_EQ(fills.partial_fill.qty, 1);
+    EXPECT_EQ(matched.partial_fill.id, 42);
+    EXPECT_EQ(matched.partial_fill.qty, 1);
 
-    EXPECT_EQ(fills.market_fill.id, 43);
-    EXPECT_EQ(fills.market_fill.qty, 1);
-    EXPECT_EQ(fills.market_fill.fill_price, 5);
+    EXPECT_EQ(matched.market_fill.id, 43);
+    EXPECT_EQ(matched.market_fill.qty, 1);
+    EXPECT_EQ(matched.market_fill.fill_price, 5);
 
 }
 
@@ -158,21 +155,21 @@ TEST_F(FifoTests,BuyMarketSweep)
         EXPECT_EQ(fifo.level(i).orders.back().qty, 2);
     }
 
-    auto fills = fifo.match(BuyMarket(42,8,5));
+    auto matched = fifo.match(BuyMarket(42,8,5));
 
     // Buy Sweep takes all the orders from 5 and 6
     EXPECT_EQ(fifo.level(5).depth, 0);
     EXPECT_EQ(fifo.level(6).depth, 0);
     EXPECT_EQ(fifo.level(7).depth, 4);
 
-    EXPECT_EQ(fills.market_fill.id, 42);
-    EXPECT_EQ(fills.market_fill.qty, 8);
-    EXPECT_EQ(fills.market_fill.fill_price, 5.5);
+    EXPECT_EQ(matched.market_fill.id, 42);
+    EXPECT_EQ(matched.market_fill.qty, 8);
+    EXPECT_EQ(matched.market_fill.fill_price, 5.5);
 
-    EXPECT_EQ(fills.limit_fills.size(),4);
+    EXPECT_EQ(matched.limit_fills.size(),4);
     // filled limit order ids are in the limit_fills container
-    for (int i{1}; i < fills.limit_fills.size(); ++i)
-        EXPECT_EQ(i, fills.limit_fills[i-1]);
+    for (int i{1}; i < matched.limit_fills.size(); ++i)
+        EXPECT_EQ(i, matched.limit_fills[i-1]);
 }
 
 TEST_F(FifoTests,SellMarketSweep)
@@ -194,19 +191,19 @@ TEST_F(FifoTests,SellMarketSweep)
         EXPECT_EQ(fifo.level(i).orders.back().qty, 2);
     }
 
-    auto fills = fifo.match(SellMarket(42,8,7));
+    auto matched = fifo.match(SellMarket(42,8,7));
 
     EXPECT_EQ(fifo.level(7).depth, 0);
     EXPECT_EQ(fifo.level(6).depth, 0);
     EXPECT_EQ(fifo.level(5).depth, 4);
 
-    EXPECT_EQ(fills.market_fill.id, 42);
-    EXPECT_EQ(fills.market_fill.qty, 8);
-    EXPECT_EQ(fills.market_fill.fill_price, 6.5);
+    EXPECT_EQ(matched.market_fill.id, 42);
+    EXPECT_EQ(matched.market_fill.qty, 8);
+    EXPECT_EQ(matched.market_fill.fill_price, 6.5);
 
     std::vector<ID> expects {5,6,3,4};
-    for (int i{1}; i < fills.limit_fills.size(); ++i)
-        EXPECT_EQ(expects[i],fills.limit_fills[i]);
+    for (int i{1}; i < matched.limit_fills.size(); ++i)
+        EXPECT_EQ(expects[i],matched.limit_fills[i]);
 }
 
 
@@ -228,21 +225,21 @@ TEST_F(FifoTests,BuyMarketLimit)
     EXPECT_EQ(fifo.level(6).orders.size(), 1);
     EXPECT_EQ(fifo.level(6).orders.front().qty, 2);
 
-    auto fills = fifo.match(BuyMarketLimit(42,6,5,2,6));
+    auto matched = fifo.match(BuyMarketLimit(42,6,5,2,6));
 
     // BuyMarketLimit takes all the orders from 5 and 6
     EXPECT_EQ(fifo.level(5).depth, 0);
-    EXPECT_EQ(fifo.level(6).depth, 0); // the next order will be a buy limit at this price
+    EXPECT_EQ(fifo.level(6).depth, 2); // the next order will be a buy limit at this price
     EXPECT_EQ(fifo.level(7).depth, 4);
 
-    EXPECT_EQ(fills.market_fill.id, 42);
-    EXPECT_EQ(fills.market_fill.qty, 6);
-    EXPECT_EQ(fills.market_fill.fill_price, 5.5);
+    EXPECT_EQ(matched.market_fill.id, 42);
+    EXPECT_EQ(matched.market_fill.qty, 6);
+    EXPECT_EQ(matched.market_fill.fill_price, 5.5);
 
-    EXPECT_EQ(fills.limit_fills.size(),3);
+    EXPECT_EQ(matched.limit_fills.size(),3);
     // filled limit order ids are in the limit_fills container
-    for (int i{1}; i < fills.limit_fills.size(); ++i)
-        EXPECT_EQ(i, fills.limit_fills[i-1]);
+    for (int i{1}; i < matched.limit_fills.size(); ++i)
+        EXPECT_EQ(i, matched.limit_fills[i-1]);
 }
 
 TEST_F(FifoTests,SellMarketLimit)
@@ -262,28 +259,28 @@ TEST_F(FifoTests,SellMarketLimit)
     EXPECT_EQ(fifo.level(6).orders.size(), 1);
     EXPECT_EQ(fifo.level(6).orders.front().qty, 2);
 
-    auto fills = fifo.match(SellMarketLimit(42,6,7,2,6));
+    auto matched = fifo.match(SellMarketLimit(42,6,7,2,6));
 
     // SellMarketLimit takes all the orders from 5 and 6
     EXPECT_EQ(fifo.level(7).depth, 0);
-    EXPECT_EQ(fifo.level(6).depth, 0); // the next order will be a sell limit at this price
+    EXPECT_EQ(fifo.level(6).depth, 2); // the next order will be a sell limit at this price
     EXPECT_EQ(fifo.level(5).depth, 4);
 
-    EXPECT_EQ(fills.market_fill.id, 42);
-    EXPECT_EQ(fills.market_fill.qty, 6);
-    EXPECT_EQ(fills.market_fill.fill_price, 6.5);
+    EXPECT_EQ(matched.market_fill.id, 42);
+    EXPECT_EQ(matched.market_fill.qty, 6);
+    EXPECT_EQ(matched.market_fill.fill_price, 6.5);
 
-    EXPECT_EQ(fills.limit_fills.size(),3);
+    EXPECT_EQ(matched.limit_fills.size(),3);
     // filled limit order ids are in the limit_fills container
 
     std::vector<ID> expects {5,6,3};
-    for (int i{}; i < fills.limit_fills.size(); ++i)
-        EXPECT_EQ(expects[i], fills.limit_fills[i]);
+    for (int i{}; i < matched.limit_fills.size(); ++i)
+        EXPECT_EQ(expects[i], matched.limit_fills[i]);
 }
 
 TEST_F(FifoTests,Cancel)
 {
-   // Fifo fifo(10);
+
 
     std::vector<std::vector<int>> qtys {{2,3,4}};
     int start{5};
@@ -294,9 +291,10 @@ TEST_F(FifoTests,Cancel)
 
     EXPECT_EQ(fifo.level(5).depth, 9);
 
-    auto o = fifo.match(Cancel(1,3,5));
+    const auto matched = fifo.match(Cancel(1,3,5));
     EXPECT_EQ(fifo.level(5).depth, 6);
-    EXPECT_EQ(o.id,1);
+    EXPECT_EQ(matched.state_update.id,1);
 }
+
 
 

@@ -23,6 +23,7 @@
 
 #include "MatchedOrders.h"
 #include "OrderTypes.h"
+#include "OverwritingVector.h"
 
 
 /**
@@ -35,24 +36,23 @@ class RecordDepot
 
     std::unordered_map<ID,R> accepted_;
     std::unordered_map<ID,R> completed_;
-    std::vector<order::OrderFills> order_fills_;
+
     std::vector<order::StateUpdate> order_states_;
     std::unordered_set<ID> last_processed_;
 
     Time ts_;
 
     void timestamp();
-    void record_states(std::vector<order::StateUpdate>&& state_updates);
-    void record_fills(std::vector<order::OrderFills>&& fills);
 
-    void update_states();
-    void update_fills();
+    void update_matched();
 
     ID process_limit_fills(ID id);
     ID process_partial_fill(order::PartialFill o);
     ID process_market_fill(order::MarketFill o);
+    ID process_state_update(order::StateUpdate o);
 
 public:
+    OverwritingVector<order::Matched> matched_;
     ///
     /// @return reference to table of unfilled, but accepted orders, includes partial fills
     const std::unordered_map<ID,R>& accepted() const;
@@ -70,9 +70,12 @@ public:
     /// @brief creates record from incoming order and adds to accepted
     /// @param o incoming order
     void make_order_record(order::Submitted o);
-    /// @brief gets the OrderFills and StateUpdates from Orderbook and moves them into local containers for processing
-    /// @param processed_orders returned by order_book.get_processed_orders()
-    void record_processed_orders(order::Matched&& processed_orders);
+
+
+    void record_matched_orders(const OverwritingVector<order::Matched>& matched);
+
+
+
     /// @brief update the records of the orders pulled in by record_processed_orders
     void update_order_records();
 
@@ -88,7 +91,8 @@ template<typename R>
 const std::unordered_map<ID,R>& RecordDepot<R>::completed() const {return completed_;}
 
 template<typename R>
-R RecordDepot<R>::find_order_record(const ID id) {
+R RecordDepot<R>::find_order_record(const ID id)
+{
 
     if (accepted_.contains(id)) return accepted_[id];
     if (completed_.contains(id)) return completed_[id];
@@ -102,13 +106,12 @@ void RecordDepot<R>::timestamp()
 }
 
 template <typename R>
-void RecordDepot<R>::record_processed_orders(order::Matched&&  processed_orders)
+void RecordDepot<R>::record_matched_orders(const OverwritingVector<order::Matched>&  matched)
 {
-    if (!processed_orders.second.empty() && processed_orders.second.back().id != 0)
-        record_states(std::move(processed_orders.second));
+    for (const auto& m : matched)
+        matched_.push_back(m);
 
-    if (!processed_orders.first.empty() && processed_orders.first.back().market_fill.id != 0)
-        record_fills(std::move(processed_orders.first));
+    //std::cout<<"Rec matched size: "<<matched[0].limit_fills.size()<<std::endl;
 }
 
 
@@ -122,57 +125,26 @@ void RecordDepot<R>::make_order_record(order::Submitted o) {
    },o);
 }
 
-template<typename R>
-void RecordDepot<R>::record_states(std::vector<order::StateUpdate>&& state_updates) {
-
-    order_states_ = std::move(state_updates);
-}
-
-template<typename R>
-void RecordDepot<R>::record_fills(std::vector<order::OrderFills>&& fills) {
-
-    order_fills_ = std::move(fills);
-}
-
-
 
 template<typename R>
 void RecordDepot<R>::update_order_records() {
 
     timestamp();
-    update_states();
-    update_fills();
-
+    update_matched();
+    matched_.clear();
 }
 
 
+
 template<typename R>
-void RecordDepot<R>::update_states()
+void RecordDepot<R>::update_matched()
 {
-    while (!order_states_.empty())
+    for (const auto& [limit, partial,market,state] : matched_)
     {
-        auto [id,state] = order_states_.back();
-        order_states_.pop_back();
-
-        last_processed_.insert(id);
-
-        accepted_[id].update(state,ts_);
-
-        if (state == order::OrderState::CANCELLED || state == order::OrderState::REJECTED)
+        if (state.id)
         {
-            completed_.insert(std::move(accepted_.extract(id)));
+            last_processed_.insert(process_state_update(std::move(state)));
         }
-    }
-}
-
-template<typename R>
-void RecordDepot<R>::update_fills()
-{
-    while (!order_fills_.empty())
-    {
-        auto [limit, partial,market] = order_fills_.back();
-        order_fills_.pop_back();
-
         for (ID id : limit)
             last_processed_.insert(process_limit_fills(id));
 
@@ -181,6 +153,9 @@ void RecordDepot<R>::update_fills()
 
         if (market.id)
             last_processed_.insert(process_market_fill(std::move(market)));
+
+
+
     }
 }
 
@@ -218,6 +193,18 @@ ID RecordDepot<R>::process_market_fill(order::MarketFill o)
     else
     {
         accepted_[o.id].update_market_limit(o,ts_);
+    }
+    return o.id;
+}
+
+template<typename R>
+ID RecordDepot<R>::process_state_update(order::StateUpdate o)
+{
+    accepted_[o.id].update(o.state,ts_);
+
+    if (o.state == order::OrderState::CANCELLED || o.state == order::OrderState::REJECTED)
+    {
+        completed_.insert(std::move(accepted_.extract(o.id)));
     }
     return o.id;
 }

@@ -117,6 +117,8 @@ TEST_F(OVTests,CopyOpOverwrite)
     }
 
     OverwritingVector<int> ov2;
+    OverwritingVector<int>* ov2_p = &ov2;
+
     for (int i{}; i < 20; ++i)
     {
         ov2.push_back(i+100);
@@ -130,6 +132,7 @@ TEST_F(OVTests,CopyOpOverwrite)
     }
 
     ov2 = ov1;
+    EXPECT_EQ(&ov2, ov2_p); // same memory if no capacity-based reallocation
     EXPECT_TRUE(ov2.capacity() >= 20);
     EXPECT_EQ(ov2.size(), 10);
     for (int i{}; i < 10; ++i)
@@ -137,3 +140,4 @@ TEST_F(OVTests,CopyOpOverwrite)
         EXPECT_EQ(ov2[i],i);
     }
 }
+

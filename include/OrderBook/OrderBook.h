@@ -68,7 +68,7 @@ public:
 
     /// @brief move processed orders out of OrderBook, typically to Record Depot
     /// @return pair of vectors containing all OrderFills and StateUpdates from last transaction
-    order::Matched get_matched_orders();
+    const OverwritingVector<order::Matched>& get_matched_orders();
 
     //Dom Interface
     /// @return best bid price
@@ -103,14 +103,15 @@ public:
     void match(auto&& order);
 
     void match_next_order();
-
+    OverwritingVector<order::Matched> matched_;
 private:
 
     Instrument inst_;
     Price num_prices_;
     Matcher matcher_;
 
-    std::vector<order::OrderFills> order_fills_;
+
+    std::vector<order::Matched> order_fills_;
     std::vector<order::StateUpdate> order_states_;
 
     Dom d_;
@@ -119,7 +120,7 @@ private:
     std::queue<order::Submitted> submitted_q_;
     std::queue<order::Pending> pending_q_;
 
-    void push_matched(order::OrderFills&& fills);
+    void push_matched(order::Matched&& fills);
     void push_matched(order::StateUpdate&& updates);
 };
 
@@ -149,6 +150,7 @@ void OrderBook<Matcher>::evaluate_orders()
 template <Is_Matcher Matcher>
 void OrderBook<Matcher>::match_orders()
 {
+    //matched_.clear();//should be moved
     while (!pending_q_.empty())
     {
         match(pending_q_.front());
@@ -159,18 +161,16 @@ void OrderBook<Matcher>::match_orders()
 
 
 template <Is_Matcher Matcher>
-order::Matched OrderBook<Matcher>::get_matched_orders()
+const OverwritingVector<order::Matched>& OrderBook<Matcher>::get_matched_orders()
 {
-    auto processed = std::make_pair(order_fills_, order_states_);
-    order_fills_.back().market_fill.id = 0;
-    order_states_.back().id = 0;
-    return std::move(processed);
+
+    return matched_;
 
 }
 
 
 template <Is_Matcher Matcher>
-void OrderBook<Matcher>::push_matched(order::OrderFills&& fills)
+void OrderBook<Matcher>::push_matched(order::Matched&& fills)
 {
     // temp fix while designing RingBuffer
     order_fills_.back() = std::move(fills);
@@ -250,16 +250,21 @@ Qty OrderBook<Matcher>::count(Price idx) const {
 }
 
 template <Is_Matcher Matcher>
-void OrderBook<Matcher>::match(auto&& order) {
+void OrderBook<Matcher>::match(auto&& order)
+{
+    matched_.clear();//should be moved
     std::visit([this](auto&& o)
     {
-        push_matched(matcher_.match(o));
+        matched_.push_back(matcher_.match(o));
+        //std::cout<<matched_.size()<<'\n';
+        //push_matched(matcher_.match(o));
 
     },order);
 }
 
 template <Is_Matcher Matcher>
 void OrderBook<Matcher>::match_next_order() {
+
     if (!pending_q_.empty())
     {
         match(pending_q_.front());

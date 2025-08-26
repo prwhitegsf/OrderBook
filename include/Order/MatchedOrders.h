@@ -11,6 +11,7 @@
 #include <vector>
 #include "ValueTypes.h"
 #include "OrderTypes.h"
+#include "OverwritingVector.h"
 
 namespace order
 {
@@ -25,15 +26,8 @@ namespace order
         ID id{};
         Qty qty{};
         Price limit{};
-        float fill_price{};
+        double fill_price{};
 
-    };
-
-    struct OrderFills
-    {
-        std::vector<ID> limit_fills;
-        PartialFill partial_fill;
-        MarketFill market_fill;
     };
 
     struct StateUpdate
@@ -42,8 +36,51 @@ namespace order
         OrderState state{OrderState::SUBMITTED};
     };
 
+    struct Matched
+    {
+        OverwritingVector<ID> limit_fills;
+        PartialFill partial_fill;
+        MarketFill market_fill;
+        StateUpdate state_update;
 
-    using Matched =  std::pair<std::vector<OrderFills>,std::vector<StateUpdate>>;
+        Matched() : limit_fills(8) {}
+
+        Matched& operator=(const Matched& other)
+        {
+            if (this != &other)
+            {
+                if (!other.limit_fills.empty())
+                {
+                    limit_fills.clear();
+                    for (auto id : other.limit_fills)
+                        if (id)
+                            limit_fills.push_back(id);
+                }
+                else
+                    limit_fills.clear();
+
+                partial_fill = other.partial_fill;
+                market_fill = other.market_fill;
+                state_update = other.state_update;
+            }
+
+            return *this;
+        }
+
+        void clear()
+        {
+            limit_fills.clear();
+            market_fill.id = 0;
+            partial_fill.id = 0;
+            state_update.id = 0;
+        }
+
+    };
+
+
+
+
+    using Processed =  std::pair<std::vector<Matched>,std::vector<StateUpdate>>;
 
 }
 

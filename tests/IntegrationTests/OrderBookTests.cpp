@@ -30,7 +30,7 @@ public:
         ob.submit_order(o);
         ob.evaluate_orders();
         ob.match_orders();
-        rd.record_processed_orders(std::move(ob.get_matched_orders()));
+        rd.record_matched_orders(ob.get_matched_orders());
         rd.update_order_records();
 
     }
@@ -63,6 +63,7 @@ TEST_F(OrderBookTest, SellLimit)
     EXPECT_EQ(rd.accepted().at(id).states.back(), OrderState::ACCEPTED);
 }
 
+
 TEST_F(OrderBookTest, BuyLimitReject)
 {
     constexpr ID id{42};
@@ -94,6 +95,33 @@ TEST_F(OrderBookTest, SellLimitReject)
     EXPECT_EQ(rd.completed().at(id).quantities.back(), 1);
     EXPECT_EQ(rd.completed().at(id).states.back(), OrderState::REJECTED);
 
+}
+
+TEST_F(OrderBookTest,BuyMarketFull)
+{
+    // Limit orders to execute market order against
+    process_order(SellLimit(42,5,50));
+    EXPECT_EQ(ob.depth(50),5);
+
+    // market order
+    process_order(BuyMarket(43,5,55));
+    EXPECT_EQ(ob.depth(50),0);
+
+    EXPECT_EQ(rd.accepted().size(),0);
+    EXPECT_EQ(rd.completed().size(),2);
+
+    // Market Execution
+    EXPECT_EQ(rd.completed().at(43).id, 43);
+    EXPECT_EQ(rd.completed().at(43).limit_price, 55);
+    EXPECT_EQ(rd.completed().at(43).filled_price, 50);
+    EXPECT_EQ(rd.completed().at(43).quantities.back(), 0);
+    EXPECT_EQ(rd.completed().at(43).states.back(),OrderState::FILLED);
+
+    // Limit order partial fill
+    EXPECT_EQ(rd.completed().at(42).id,42);
+    EXPECT_EQ(rd.completed().at(42).limit_price,50);
+    EXPECT_EQ(rd.completed().at(42).quantities.back(), 0);
+    EXPECT_EQ(rd.completed().at(42).states.back(),OrderState::FILLED);
 }
 
 TEST_F(OrderBookTest, BuyMarket)
@@ -158,17 +186,22 @@ TEST_F(OrderBookTest, BuyMarketToBuyMarketLimit)
     process_order(SellLimit(43,5,51));
     process_order(SellLimit(44,5,52));
 
+    EXPECT_EQ(rd.accepted().size(),3);
     EXPECT_EQ(ob.depth(50),5);
     EXPECT_EQ(ob.depth(51),5);
     EXPECT_EQ(ob.depth(52),5);
 
     process_order(BuyMarket(45,20,51));
+
     EXPECT_EQ(ob.depth(50),0); // took all orders at 50
     EXPECT_EQ(ob.depth(51),10); // take all at 51, then place buy limit for remaining
     EXPECT_EQ(ob.depth(52),5); // no executions, 52 > limit price
 
     // has the sell order at 52 and remaining buy limit at 51
+
     EXPECT_EQ(rd.accepted().size(),2);
+
+
     // sell limit at 52 still there
     EXPECT_EQ(rd.accepted().at(44).quantities.back(),5); //still there
     EXPECT_EQ(rd.accepted().at(44).states.back(),OrderState::ACCEPTED); //still there
@@ -179,7 +212,7 @@ TEST_F(OrderBookTest, BuyMarketToBuyMarketLimit)
     EXPECT_EQ(rd.accepted().at(45).type,"BuyMarketLimit");
     EXPECT_EQ(rd.accepted().at(45).filled_price,50.75); // fill 5 @50 and 15 @51
 
-    // Filled limit orders are in executions
+    // Filled limit orders are in completed
     EXPECT_EQ(rd.completed().size(),2);
     EXPECT_EQ(rd.completed().at(42).quantities.back(),0);
     EXPECT_EQ(rd.completed().at(42).states.back(),OrderState::FILLED);
@@ -431,7 +464,7 @@ TEST_F(OrderBookTest,SelfConsistent_WithUnderflowCheck)
         ob1.submit_order(og1.record_order(og1.make_random_order(ob1, rd1,10)));
         ob1.evaluate_orders();
         ob1.match_orders();
-        rd1.record_processed_orders(std::move(ob1.get_matched_orders()));
+        rd1.record_matched_orders(ob1.get_matched_orders());
         rd1.update_order_records();
 
         /// for catching underflows
@@ -458,7 +491,7 @@ TEST_F(OrderBookTest,SelfConsistent_WithUnderflowCheck)
         og1.recorded_orders.pop();
         ob2.evaluate_orders();
         ob2.match_orders();
-        rd2.record_processed_orders(std::move(ob2.get_matched_orders()));
+        rd2.record_matched_orders(ob2.get_matched_orders());
         rd2.update_order_records();
 
     }
