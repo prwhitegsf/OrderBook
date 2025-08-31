@@ -20,6 +20,7 @@ class OverwritingVector
 public:
 
     explicit OverwritingVector(const size_t size) : data_(size) {}
+    explicit OverwritingVector(const size_t size, const size_t end) : data_(size), end_(end) {}
 
     OverwritingVector() = default;
     ~OverwritingVector() = default;
@@ -34,18 +35,32 @@ public:
     OverwritingVector& operator=(const OverwritingVector& other);
 
     const T& operator[](const size_t index) const { return data_[index]; }
+    T& operator[](const size_t index) { return data_[index]; }
+
+
 
     auto begin()const { return data_.begin(); }
     auto end() const { return data_.begin() + end_; }
 
+    [[nodiscard]]
     size_t capacity() const { return data_.size(); }
-    size_t size()const { return end_; }
-    bool empty() const { return end_ == 0; }
-    void clear() { end_ = 0; }
 
+    [[nodiscard]]
+    size_t size()const { return end_; }
+
+    [[nodiscard]]
+    bool empty() const { return end_ == 0; }
+
+    void clear() { end_ = 0; }
 
     void push_back(const T& item);
 
+
+    T& next()
+    {
+        ++end_;
+        return data_[end_-1];
+    }
     //unused, but still thinking about it
     std::span<T> take();
 };
@@ -55,12 +70,13 @@ OverwritingVector<T>& OverwritingVector<T>::operator=(const OverwritingVector& o
     if (this != &other)
     {
         end_ = 0;
-        for (const auto& item : other.data_)
+        for (const auto& item : other)
             push_back(item);
     }
 
     return *this;
 }
+
 
 template <typename T>
 void OverwritingVector<T>::push_back(const T& item)

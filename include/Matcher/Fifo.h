@@ -6,6 +6,7 @@
 #define ORDERBOOK_FIFO_H
 
 
+#include <iostream>
 
 #include "Level.h"
 #include "MatchedOrders.h"
@@ -36,11 +37,11 @@ public:
     const order::Matched& match(order::BuyMarketLimit o);
     const order::Matched& match(order::SellMarketLimit o);
 
-    const order::Matched& match(order::BuyLimit o);
-    const order::Matched& match(order::SellLimit o);
+    const order::StateUpdate& match(order::BuyLimit o);
+    const order::StateUpdate& match(order::SellLimit o);
 
-    const order::Matched& match(order::Cancel o);
-    const order::Matched& match(order::Rejected o);
+    const order::StateUpdate& match(order::Cancel o);
+    const order::StateUpdate& match(order::Rejected o);
 
     [[nodiscard]] const Level& level(size_t idx)const;
 
@@ -50,28 +51,10 @@ private:
     std::vector<Level> level_;
     order::Matched matched_;
 
-    void reset_matched(ID id, Qty qty)
-    {
-        matched_.limit_fills.clear();
+    void reset_matched(ID id, Qty qty);
+    void reset_matched(ID id, order::OrderState state);
 
-        matched_.market_fill.id = id;
-        matched_.market_fill.qty = qty;
-        matched_.market_fill.fill_price = 0;
-
-        matched_.partial_fill.id = 0;
-        matched_.state_update.id = 0;
-    }
-
-
-    void reset_matched()
-    {
-        matched_.limit_fills.clear();
-        matched_.market_fill.id = 0;
-        matched_.partial_fill.id = 0;
-        matched_.state_update.id = 0;
-    }
-
-    const order::Matched& limit(auto o);
+    const order::StateUpdate& limit(auto o);
     const order::Matched& market(auto o, auto&& dir);
     const order::Matched& market_limit(auto o, auto&& dir);
     int fill_level(auto& o);

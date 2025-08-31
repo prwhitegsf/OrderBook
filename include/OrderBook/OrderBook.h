@@ -114,6 +114,23 @@ private:
     std::queue<order::Pending> pending_q_;
     OverwritingVector<order::Matched> matched_;
 
+    void push_matched(const order::StateUpdate& state_update)
+    {
+        auto& m = matched_.next();
+        m.state_update = state_update;
+        m.market_fill.id = 0;
+        m.partial_fill.id = 0;
+        m.limit_fills.clear();
+    }
+
+    void push_matched(const order::Matched& matched)
+    {
+        auto& m = matched_.next();
+        m.market_fill = matched.market_fill;
+        m.partial_fill = matched.partial_fill;
+        m.limit_fills = matched.limit_fills;
+        m.state_update.id = 0;
+    }
 };
 
 
@@ -153,11 +170,13 @@ void OrderBook<Matcher>::match_orders()
 template <Is_Matcher Matcher>
 void OrderBook<Matcher>::match(auto&& order)
 {
-    matched_.clear();
+
+   matched_.clear();
 
     std::visit([this](auto&& o)
     {
-        matched_.push_back(matcher_.match(o));
+
+        push_matched(matcher_.match(o));
 
     },order);
 }
@@ -175,6 +194,7 @@ void OrderBook<Matcher>::match_next_order() {
 template <Is_Matcher Matcher>
 const OverwritingVector<order::Matched>& OrderBook<Matcher>::get_matched_orders()
 {
+
     return matched_;
 }
 

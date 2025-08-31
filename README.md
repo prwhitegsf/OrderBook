@@ -234,8 +234,7 @@ Consists of:
 ```
 submitted_q_
 pending_q_
-order_fills_
-order_states_
+matched_
 
 ```
 

@@ -108,6 +108,7 @@ TEST_F(OrderBookTest,BuyMarketFull)
     process_order(BuyMarket(43,5,55));
     EXPECT_EQ(ob.depth(50),0);
 
+
     EXPECT_EQ(rd.accepted().size(),0);
     EXPECT_EQ(rd.completed().size(),2);
 

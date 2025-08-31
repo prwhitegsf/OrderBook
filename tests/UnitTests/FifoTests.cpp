@@ -44,7 +44,7 @@ TEST_F(FifoTests,BuyLimit)
     EXPECT_EQ(fifo.level(5).count(), 1);
     EXPECT_EQ(fifo.level(5).orders.front().id, 42);
     EXPECT_EQ(fifo.level(5).orders.front().qty, 1);
-    EXPECT_EQ(m.state_update.id, 42);
+    EXPECT_EQ(m.id, 42);
 
 }
 
@@ -55,7 +55,7 @@ TEST_F(FifoTests,SellLimit)
     EXPECT_EQ(fifo.level(5).depth, 1);
     EXPECT_EQ(fifo.level(5).orders.front().id, 42);
     EXPECT_EQ(fifo.level(5).orders.front().qty, 1);
-    EXPECT_EQ(m.state_update.id, 42);
+    EXPECT_EQ(m.id, 42);
 }
 
 
@@ -291,7 +291,7 @@ TEST_F(FifoTests,Cancel)
 
     const auto matched = fifo.match(Cancel(1,3,5));
     EXPECT_EQ(fifo.level(5).depth, 6);
-    EXPECT_EQ(matched.state_update.id,1);
+    EXPECT_EQ(matched.id,1);
 
     EXPECT_THROW(fifo.match(Cancel(101,3,5)),std::invalid_argument);
 

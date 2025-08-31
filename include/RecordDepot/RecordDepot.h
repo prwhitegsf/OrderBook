@@ -107,6 +107,7 @@ void RecordDepot<R>::record_matched_orders(const OverwritingVector<order::Matche
 {
     for (const auto& m : matched)
         matched_.push_back(m);
+
 }
 
 
@@ -133,6 +134,7 @@ void RecordDepot<R>::update_order_records()
 template<typename R>
 void RecordDepot<R>::update_matched()
 {
+
     for (const auto& [limit, partial,market,state] : matched_)
     {
         for (const ID id : limit)
