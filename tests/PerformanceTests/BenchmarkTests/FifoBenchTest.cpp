@@ -17,8 +17,6 @@ public:
     size_t iterations{1000000};
     OrderBook<Fifo> order_book;
     RecordDepot<order::Record> record_depot;
-    std::queue<order::Pending> pq;
-
     gen::OrderGenerator order_gen;
 
 

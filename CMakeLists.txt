@@ -30,8 +30,10 @@ set(INCLUDE
 add_executable(demo demo.cpp  ${SOURCE})
 target_include_directories(demo PUBLIC ${INCLUDE} "${PROJECT_SOURCE_DIR}/include/Printer" )
 
-
-add_executable(benchmarks tests/PerformanceTests/BenchmarkTests/FifoBenchTest.cpp ${SOURCE})
+add_executable(benchmarks
+        tests/PerformanceTests/BenchmarkTests/FifoBenchTest.cpp
+        tests/PerformanceTests/BenchmarkTests/OrderProcessingTest.cpp
+        ${SOURCE})
 target_include_directories(benchmarks PUBLIC ${INCLUDE} "${PROJECT_SOURCE_DIR}/include/Printer" )
 
 find_package(benchmark CONFIG REQUIRED)

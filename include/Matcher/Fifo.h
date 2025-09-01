@@ -5,9 +5,6 @@
 #ifndef ORDERBOOK_FIFO_H
 #define ORDERBOOK_FIFO_H
 
-
-#include <iostream>
-
 #include "Level.h"
 #include "MatchedOrders.h"
 #include "OrderTypes.h"

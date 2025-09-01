@@ -149,17 +149,17 @@ namespace gen
         else if (binomial(0.5)) // Limit orders
         {
            if (price < mid)
-            {
+           {
                 o = !too_many_orders() ?
                         make_limit_order<order::BuyLimit>(id, max_qty,price) :
                         make_market_order<order::SellMarket>(ob, id, max_qty,0);
-            }
-            else
-            {
+           }
+           else
+           {
                 o = !too_many_orders() ?
                         make_limit_order<order::SellLimit>(id, max_qty,price) :
                         make_market_order<order::BuyMarket>(ob, id, max_qty,0);
-            }
+           }
         }
         else // Market orders
         {
