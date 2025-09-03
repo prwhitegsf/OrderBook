@@ -15,6 +15,8 @@
 
 namespace order
 {
+
+
     struct PartialFill
     {
         ID id{};
@@ -27,8 +29,6 @@ namespace order
         Qty qty{};
         Price limit{};
         float fill_price{};
-
-
     };
 
     struct StateUpdate

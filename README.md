@@ -8,7 +8,7 @@ I'm building this portfolio project in order to develop a better understanding o
 - the performance implications of copy, move and assign operations along with RVO
 - move and value semantics
 - minimizing data dependency in order to move to a multithreaded implementation
-- Assembly
+- Assembly instructions
 - CPU caching / performance with varying amounts of data
 
 ** Wanting to focus on the above for this project I've left off most of the order functionality that involves holding an order until some future time and resubmitting. This includes:
@@ -114,7 +114,7 @@ Limit orders whose price falls on the wrong side of the protection price are rej
 
 ### Order Path Detail
 
-![img.png](docs/img/PathDetail.png)
+![img.png](docs/img/OrderPathDetail.png)
 
 ### Description of modules
 #### Value Types
@@ -125,7 +125,7 @@ The core values in each order. The idea, in theory, is to keep the order object'
 - Price: unsigned short integer, 2 bytes
     - we treat Price as an integral type
     - this allows us to treat vector indices as prices
-        - That is index 0 (plus a small offset) of our price container represents the minimum trade - able price for the instrument for the day
+        - That is index 0 (plus a small offset) of our price container represents the minimum tradeable price for the instrument for the day
         - And index at size - 1 (minus a small offset) represents the maximum trade - able price for the instrument for the day
         - Price can then easily be converted into a standard floating point value as part of the UI, though that is not implemented here
 
@@ -154,6 +154,7 @@ PARTIAL
 
 CANCELLED
 - The order has been removed from the order book
+- An order must be ACCEPTED before being cancelled
 - Occurs via the Cancel order type
 - Cancelled orders are placed in the Record Depot completed table
 
@@ -171,23 +172,36 @@ We declare several empty structs for
     - SellLimit
     - BuyMarket
     - SellMarket
+    - BuyMarketLimit (pending only)
+    - SellMarketLimit (pending only)
     - Cancel
+    - Rejected (pending only)
 
 We then group this set of orders together with std::variant into
 - Submitted and Pending orders
 - which allows us to queue the different order types together
 
-#### Processed Orders
 
-State updates
-- when an order has been accepted, rejected or cancelled that action is recorded via a state update object, which consists of the order id and state
 
-Order Fills
-- Orders that have been filled or partially filled are recorded in the Order Fills object
-- Wraps structs for
-    - limit_fills
-    - partial_fills
-    - market_fills
+
+
+#### Matched Orders
+
+Orders that have been evaluated and passed through the matcher are collected in a MatchedOrders object.
+
+This includes:
+- market_fills
+  - completely or partially filled market orders 
+- partial_fills
+  - partially filled limit orders
+- filled_limit_orders
+  - completely filled limit orders
+- state_updates
+  - ACCEPTED limit orders
+  - CANCELLED limit orders
+  - REJECTED limit orders
+
+Matched Orders are collected inside the Matcher, then copied out to the Orderbook's matched_ container once the matching sequence is complete
 
 #### Generators
 
@@ -204,7 +218,8 @@ For this project we only care about the number of prices, but theoretically this
 Our matching strategy: First In, First Out
 Consists of:
 - a container of Levels holding order information at each price
-- A set of functions to add, remove, and change the quantity of the orders
+- a set of functions to add, remove, and change the quantity of the orders
+- a MatchedOrders object holding the result of the matching sequence 
 - each Level consists of:
     - a container of all the orders at that price
     - depth: the total number of contracts available at the price
@@ -245,7 +260,7 @@ There's a lot of information we'd want associated with each order that we wouldn
 - for this project that includes timestamps, state changes, fill price, etc
 - but this where you'd include stuff we're not concerned about like duration, linking to a broker/ account id, etc
 
-Records are created at generation and added to the Record Depot ahead of order submission.
+Records are created at generation and added to the Record Depot before being submitted to the Orderbook.
 
 #### Record Depot
 
@@ -263,6 +278,18 @@ Centers around two hash tables
 Also provides
 - find_order(id) which searches both tables and returns the Record of the passed id
 - last_processed() which returns a set of the order ids processed on the last trade
+
+#### Overwriting Vector
+*added 8/25/25*
+
+When profiling order processing, one of the first things that jumped out were the memory allocations, particularly around the limit_fills vector inside MatchedOrders and the matched_ container inside OrderBook.
+
+The Overwriting Vector (OV) simply wraps a vector and maintains a separate end_ variable. 
+- the OV's elements can only ever be overwritten, they cannot be removed or moved from
+  - the move constructor is marked deleted
+  - calling clear() sets end_ to 0, but does not alter the underlying vector
+- push_back() copies the passed element index end_, then increments end_, expanding the underlying vector as needed
+    - likewise the copy assign operator sets the destination's end_ variable to 0 then calls push_back for each element in the source
 
 ### Looking ahead
 
