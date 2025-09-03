@@ -4,7 +4,7 @@ This is a toy order book based roughly on the [CME's order specifications for fu
 
 I'm building this portfolio project in order to develop a better understanding of:
 - compile time polymorphism
-- performance testing tools and techniques
+- performance testing tools and techniques (see docs/PerformanceNotes.md)
 - the performance implications of copy, move and assign operations along with RVO
 - move and value semantics
 - minimizing data dependency in order to move to a multithreaded implementation

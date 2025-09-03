@@ -47,8 +47,8 @@ target_link_libraries(tests PUBLIC GTest::gtest GTest::gtest_main )
 
 # Benchmark Tests
 set(BENCHMARKS
-        "${PROJECT_SOURCE_DIR}/tests/PerformanceTests/BenchmarkTests/EvaluateAndMatch.cpp"
-       # "${PROJECT_SOURCE_DIR}/tests/PerformanceTests/BenchmarkTests/FifoBenchTest.cpp"
+        #"${PROJECT_SOURCE_DIR}/tests/PerformanceTests/BenchmarkTests/EvaluateAndMatch.cpp"
+        "${PROJECT_SOURCE_DIR}/tests/PerformanceTests/BenchmarkTests/FifoBenchTest.cpp"
 )
 
 
@@ -65,7 +65,7 @@ target_link_libraries(benchmarks PRIVATE benchmark::benchmark benchmark::benchma
 string(TIMESTAMP current_time_utc UTC)
 add_custom_target(save_benchmarks
         COMMAND $<TARGET_FILE:benchmarks>
-        "--benchmark_out=${CMAKE_CURRENT_SOURCE_DIR}/tests/PerformanceTests/BenchmarkReports/FifoBench_${current_time_utc}"
+        "--benchmark_out=${CMAKE_CURRENT_SOURCE_DIR}/tests/PerformanceTests/BenchmarkReports/FifoBench_${current_time_utc}.json"
         "--benchmark_out_format=json"
         VERBATIM
 )
