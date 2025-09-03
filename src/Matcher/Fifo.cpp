@@ -119,7 +119,7 @@ const Matched& Fifo::market(auto o, auto&& dir)
     matched_.market_fill.limit = o.price;
 
     // take orders in full
-    while ( o.qty > level_[o.price].orders.front().qty)
+    while (o.qty > level_[o.price].orders.front().qty)
     {
         o.qty -=  level_[o.price].orders.front().qty;
         fill_orders(o);

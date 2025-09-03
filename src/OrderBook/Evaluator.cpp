@@ -7,6 +7,8 @@
 //
 #include "Evaluator.h"
 
+#include <iostream>
+
 Evaluator::Evaluator(Dom& dom, std::queue<order::Pending>& pending_q)
                     : d_(dom), pending_q_(pending_q){}
 
@@ -178,18 +180,22 @@ void Evaluator::evaluate_order(order::BuyLimit o) const
 }
 
  void Evaluator::next_non_zero_ask() const {
+
     while(!d_.dom[d_.ask]
         && d_.ask < d_.dom.size()-1 - d_.protection)
     {
         ++d_.ask;
+
     }
 }
 
  void Evaluator::next_non_zero_bid() const {
+
     while (d_.dom[d_.bid] == 0
         && d_.bid > d_.protection)
     {
         --d_.bid;
+
     }
 
 }

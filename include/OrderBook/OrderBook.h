@@ -171,7 +171,7 @@ template <Is_Matcher Matcher>
 void OrderBook<Matcher>::match(auto&& order)
 {
 
-   matched_.clear();
+    matched_.clear();
 
     std::visit([this](auto&& o)
     {
@@ -194,7 +194,6 @@ void OrderBook<Matcher>::match_next_order() {
 template <Is_Matcher Matcher>
 const OverwritingVector<order::Matched>& OrderBook<Matcher>::get_matched_orders()
 {
-
     return matched_;
 }
 

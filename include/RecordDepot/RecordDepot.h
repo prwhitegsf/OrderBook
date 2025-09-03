@@ -39,8 +39,8 @@ class RecordDepot
 
     OverwritingVector<order::Matched> matched_;
 
-    std::unordered_set<ID> last_processed_;
-
+    //std::unordered_set<ID> last_processed_;
+    std::vector<ID> last_processed_;
     Time ts_;
 
     void timestamp();
@@ -54,6 +54,11 @@ class RecordDepot
 
 public:
 
+    /*RecordDepot()
+    {
+        accepted_.reserve(10000);
+        completed_.reserve(10000);
+    }*/
 
     /// @return reference to table of unfilled, but accepted orders, includes partial fills
     const std::unordered_map<ID,R>& accepted() const;
@@ -62,8 +67,8 @@ public:
     const std::unordered_map<ID,R>& completed() const;
 
     /// @return a list with the IDs of all orders changed in the last transaction
-    std::unordered_set<ID> last_processed();
-
+   // std::unordered_set<ID> last_processed();
+    const std::vector<ID>& last_processed();
     /// @param id desired order id
     /// @return a copy of the order record
     R find_order_record(ID id);
@@ -79,6 +84,7 @@ public:
     /// @brief update the records of the orders pulled in by record_matched_orders
     void update_order_records();
 
+    void clear_matched(){ matched_.clear(); }
 };
 
 
@@ -107,7 +113,6 @@ void RecordDepot<R>::record_matched_orders(const OverwritingVector<order::Matche
 {
     for (const auto& m : matched)
         matched_.push_back(m);
-
 }
 
 
@@ -135,28 +140,28 @@ template<typename R>
 void RecordDepot<R>::update_matched()
 {
 
+    last_processed_.clear();
     for (const auto& [limit, partial,market,state] : matched_)
     {
         for (const ID id : limit)
-            last_processed_.insert(process_limit_fills(id));
+            last_processed_.push_back(process_limit_fills(id));
 
         if (partial.id)
-            last_processed_.insert(process_partial_fill(std::move(partial)));
+            last_processed_.push_back(process_partial_fill(std::move(partial)));
 
         if (market.id)
-            last_processed_.insert(process_market_fill(std::move(market)));
+            last_processed_.push_back(process_market_fill(std::move(market)));
 
         if (state.id)
-            last_processed_.insert(process_state_update(std::move(state)));
+            last_processed_.push_back(process_state_update(std::move(state)));
+
     }
 }
 
 template<typename R>
-std::unordered_set<ID> RecordDepot<R>::last_processed()
+const std::vector<ID>& RecordDepot<R>::last_processed()
 {
-    auto x = last_processed_;
-    last_processed_.clear();
-    return x;
+    return last_processed_;
 }
 
 template<typename R>

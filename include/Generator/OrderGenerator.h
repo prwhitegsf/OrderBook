@@ -43,10 +43,11 @@ namespace gen
 
         explicit OrderGenerator(int seed);
 
-        void initialize_orderbook(OrderBook<Fifo>& ob,RecordDepot<order::Record>& rd, Qty initial_order_count, Qty max_qty);
+        void initialize_orderbook(OrderBook<Fifo>& ob,RecordDepot<order::Record>& rd, Qty initial_order_count=1000, Qty max_qty=100);
         order::Submitted record_order(order::Submitted&& o);
-        order::Submitted make_random_order(const OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd, Qty max_qty=10, float sweep_chance =0.1);
-        order::Submitted make_pending_order(const OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd, Qty max_qty=10, float sweep_chance =0.1);
+        std::queue<order::Submitted> update_recorded_cancel_order_prices(RecordDepot<order::Record>& rd);
+        order::Submitted make_random_order(const OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd, Qty max_qty=100, float sweep_chance =0.1);
+
         void print_submitted_stats();
 
     private:
@@ -66,7 +67,6 @@ namespace gen
 
         void track_min_and_max_prices(const OrderBook<Fifo>&  ob);
         Price generate_price(const OrderBook<Fifo>& ob);
-        Price reactive_price_generation(const OrderBook<Fifo>& ob, size_t margin);
 
         order::Submitted backfill_bid(const OrderBook<Fifo>& ob, ID id, Qty qty);
         order::Submitted backfill_ask(const OrderBook<Fifo>& ob, ID id, Qty qty);

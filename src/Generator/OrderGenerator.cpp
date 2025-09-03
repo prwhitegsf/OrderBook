@@ -44,15 +44,42 @@ namespace gen
             rd.record_matched_orders(ob.get_matched_orders());
             rd.update_order_records();
         }
-
-        rd.last_processed();
-
     }
 
     order::Submitted OrderGenerator::record_order(order::Submitted&& o)
     {
         recorded_orders.emplace(o);
         return o;
+    }
+
+    std::queue<order::Submitted> OrderGenerator::update_recorded_cancel_order_prices(
+        RecordDepot<order::Record>& rd)
+    {
+        std::queue<order::Submitted> updated_q;
+
+        while (!recorded_orders.empty())
+        {
+            order::Submitted o = recorded_orders.front();
+            if (order::Cancel* co = std::get_if<order::Cancel>(&o))
+            {
+                auto rec = rd.find_order_record(co->id);
+
+                if (rec.id)
+                    co->price = rec.limit_price;
+                else
+                    throw std::runtime_error("Could not find order record");
+
+                updated_q.emplace(order::Cancel(*co));
+            }
+            else
+                updated_q.emplace(o);
+
+            recorded_orders.pop();
+        }
+
+
+
+        return updated_q;
     }
 
     order::Submitted OrderGenerator::make_random_order(
@@ -91,84 +118,6 @@ namespace gen
         }
 
         rd.make_order_record(o); // submit order to record depot
-
-        return o;
-    }
-
-    Price OrderGenerator::reactive_price_generation(const OrderBook<Fifo>& ob, const size_t margin)
-    {
-        Price price{};
-
-        while (price < margin || price > ob.num_prices() - margin)
-            price = normal(ob.mid(), ob.protection()*8);
-
-        price < ob.mid() ?  ++submitted_stats["below mid"] :
-            price > ob.mid() ?  ++submitted_stats["above mid"] :
-            ++submitted_stats["at mid"];
-
-        return price;
-    }
-
-    order::Submitted OrderGenerator::make_pending_order(
-        const OrderBook<Fifo>& ob, RecordDepot<order::Record>& rd,
-        Qty max_qty, float sweep_chance)
-    {
-        track_min_and_max_prices(ob);
-        ++submitted_stats["total"];
-
-        const Price mid = ob.mid();
-        size_t margin=ob.num_prices()/10;
-        const Price price = reactive_price_generation(ob,margin);
-        const ID id = next_seq_id();
-
-        // to prevent order build up at a single price
-        auto too_many_orders = [&]{ return ob.count(price) >= 100; };
-
-
-        order::Submitted o{};
-
-        if (ob.depth(mid) == 0) // Backfill
-        {
-            o = price < mid ?
-                    make_limit_order<order::BuyLimit>(id, max_qty,mid) :
-                    make_limit_order<order::SellLimit>(id, max_qty,mid);
-        }
-
-        else if (ob.bid() < margin ) // Price getting too low
-        {
-            o = !too_many_orders() ?
-                    make_market_order<order::BuyMarket>(ob, id, max_qty,0) :
-                    make_market_order<order::SellMarket>(ob, id, max_qty,0);
-        }
-        else if (ob.ask() > ob.num_prices()-margin ) // Price getting too high
-        {
-            o = !too_many_orders() ?
-                    make_market_order<order::SellMarket>(ob, id, max_qty,0) :
-                    make_market_order<order::BuyMarket>(ob, id, max_qty,0);
-        }
-        else if (binomial(0.5)) // Limit orders
-        {
-           if (price < mid)
-           {
-                o = !too_many_orders() ?
-                        make_limit_order<order::BuyLimit>(id, max_qty,price) :
-                        make_market_order<order::SellMarket>(ob, id, max_qty,0);
-           }
-           else
-           {
-                o = !too_many_orders() ?
-                        make_limit_order<order::SellLimit>(id, max_qty,price) :
-                        make_market_order<order::BuyMarket>(ob, id, max_qty,0);
-           }
-        }
-        else // Market orders
-        {
-            o = price >= mid ?
-                    make_market_order<order::BuyMarket>(ob, id, max_qty,sweep_chance) :
-                    make_market_order<order::SellMarket>(ob, id, max_qty,sweep_chance);
-        }
-
-        rd.make_order_record(o);
 
         return o;
     }
