@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <deque>
+#include <algorithm>
 
 #include "Fifo.h"
 
@@ -46,12 +47,19 @@ double Fifo::fill_price(const Price price, const Qty filled_qty, const Qty full_
 
 const StateUpdate& Fifo::match(const Cancel o)
 {
-    // if we find the order, update the depth and order state, otherwise throw
-    if (!std::erase_if(level_[o.price].orders,[&](const Limit& ord){ return ord.id == o.id; }))
+    const auto it = std::lower_bound(
+        level_[o.price].orders.begin(),
+        level_[o.price].orders.end(),
+        o.id,
+        [&](const Limit& ord, const ID id){return ord.id < id;});
+
+
+    if (it == level_[o.price].orders.end())
     {
         throw(std::invalid_argument("Cancelled order not found at price"));
     }
 
+    level_[o.price].orders.erase(it);
     reset_matched(o.id,OrderState::CANCELLED);
     level_[o.price].depth -= o.qty;
 
