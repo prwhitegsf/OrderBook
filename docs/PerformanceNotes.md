@@ -9,6 +9,16 @@
 
 ---
 
+2025-09-08 - optimize match(Cancel)
+
+Changes:
+- instead of erase_if, I use a lower bound search to find id
+
+Results:
+- match times more consistent, particularly in relationship to evaluate order times
+
+---
+
 2025-08-31 - continue reducing memory allocations around matcher and filled orders
 
 Changes:

@@ -31,15 +31,14 @@ int main()
 
         while (iterations--)
         {
-
             order_book_processing(order_gen.make_random_order(order_book,record_depot,max_qty));
 
             record_depot.record_matched_orders(order_book.get_matched_orders());
             record_depot.update_order_records();
 
-            printer::print_trade_records(record_depot);
+            /*printer::print_trade_records(record_depot);
             printer::print_bid_ask(std::cout,order_book);
-            printer::print_dom(std::cout,order_book,dom_window);
+            printer::print_dom(std::cout,order_book,dom_window);*/
 
             if (order_book.bid() <= order_book.min_price() || order_book.ask() >= order_book.max_price())
             {
