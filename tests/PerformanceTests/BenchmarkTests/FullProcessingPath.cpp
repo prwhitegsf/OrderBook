@@ -18,7 +18,7 @@ int main()
     const Instrument instrument{"demo",200,99,100,2};
 
 
-    for (int i{}; i < 10; ++i)
+    for (int i{}; i < 4; ++i)
     {
         size_t order_count{1000000};
         constexpr size_t warm_up_count{1000};
@@ -41,6 +41,7 @@ int main()
             ob.match_orders();
 
             rd.record_matched_orders(ob.get_matched_orders());
+
             rd.clear_matched();
 
             orders.pop();

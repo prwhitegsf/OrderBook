@@ -54,12 +54,6 @@ class RecordDepot
 
 public:
 
-    /*RecordDepot()
-    {
-        accepted_.reserve(10000);
-        completed_.reserve(10000);
-    }*/
-
     /// @return reference to table of unfilled, but accepted orders, includes partial fills
     const std::unordered_map<ID,R>& accepted() const;
 
@@ -173,7 +167,7 @@ ID RecordDepot<R>::process_partial_fill(order::PartialFill o)
 
 template<typename R>
 ID RecordDepot<R>::process_limit_fills(ID id) {
-
+    //accepted_[id].update(ts_);
     completed_.insert(std::move(accepted_.extract(id)));
     completed_[id].update(ts_);
     return id;
@@ -184,6 +178,7 @@ ID RecordDepot<R>::process_market_fill(order::MarketFill o)
 {
     if (!accepted_[o.id].is_market_to_limit(o.qty))
     {
+
         completed_.insert(std::move(accepted_.extract(o.id)));
         completed_[o.id].update(o,ts_);
     }

@@ -6,6 +6,7 @@
 #define ORDERBOOK_ORDERBOOK_H
 
 
+#include <mutex>
 #include <numeric>
 
 
@@ -111,26 +112,16 @@ private:
     Evaluator evaluator_;
 
     std::queue<order::Submitted> submitted_q_;
+
     std::queue<order::Pending> pending_q_;
+    std::mutex pending_mutex_;
+
     OverwritingVector<order::Matched> matched_;
+    std::mutex matched_mutex_;
 
-    void push_matched(const order::StateUpdate& state_update)
-    {
-        auto& m = matched_.next();
-        m.state_update = state_update;
-        m.market_fill.id = 0;
-        m.partial_fill.id = 0;
-        m.limit_fills.clear();
-    }
+    void push_matched(const order::StateUpdate& state_update);
 
-    void push_matched(const order::Matched& matched)
-    {
-        auto& m = matched_.next();
-        m.market_fill = matched.market_fill;
-        m.partial_fill = matched.partial_fill;
-        m.limit_fills = matched.limit_fills;
-        m.state_update.id = 0;
-    }
+    void push_matched(const order::Matched& matched);
 };
 
 
@@ -189,6 +180,24 @@ void OrderBook<Matcher>::match_next_order() {
         match(pending_q_.front());
         pending_q_.pop();
     }
+}
+
+template <Is_Matcher Matcher>
+void OrderBook<Matcher>::push_matched(const order::StateUpdate& state_update) {
+    auto& m = matched_.next();
+    m.state_update = state_update;
+    m.market_fill.id = 0;
+    m.partial_fill.id = 0;
+    m.limit_fills.clear();
+}
+
+template <Is_Matcher Matcher>
+void OrderBook<Matcher>::push_matched(const order::Matched& matched) {
+    auto& m = matched_.next();
+    m.market_fill = matched.market_fill;
+    m.partial_fill = matched.partial_fill;
+    m.limit_fills = matched.limit_fills;
+    m.state_update.id = 0;
 }
 
 template <Is_Matcher Matcher>
