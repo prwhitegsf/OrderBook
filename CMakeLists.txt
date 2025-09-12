@@ -22,11 +22,12 @@ set(INCLUDE
         "${PROJECT_SOURCE_DIR}/include/Instrument"
         "${PROJECT_SOURCE_DIR}/include/ValueTypes"
         "${PROJECT_SOURCE_DIR}/include/Generator"
+        "${PROJECT_SOURCE_DIR}/include/Printer"
 )
 
 # Demo Project
 add_executable(demo demo.cpp  ${SOURCE})
-target_include_directories(demo PUBLIC ${INCLUDE} "${PROJECT_SOURCE_DIR}/include/Printer" )
+target_include_directories(demo PUBLIC ${INCLUDE}  )
 
 
 # Unit Tests

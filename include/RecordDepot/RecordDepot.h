@@ -6,12 +6,7 @@
 #define ORDERBOOK_RECORDDEPOT_H
 
 
-//
-// Created by prw on 7/30/25.
-//
 
-#ifndef ORDERRECORDS_H
-#define ORDERRECORDS_H
 
 
 #include <unordered_set>
@@ -39,7 +34,6 @@ class RecordDepot
 
     OverwritingVector<order::Matched> matched_;
 
-    //std::unordered_set<ID> last_processed_;
     std::vector<ID> last_processed_;
     Time ts_;
 
@@ -73,7 +67,7 @@ public:
 
     /// @brief copies matched orders from orderbook to local vector
     /// @param matched container in orderbook
-    void record_matched_orders(const OverwritingVector<order::Matched>& matched);
+    void record_matched_orders(OverwritingVector<order::Matched>& matched);
 
     /// @brief update the records of the orders pulled in by record_matched_orders
     void update_order_records();
@@ -103,8 +97,13 @@ void RecordDepot<R>::timestamp()
 }
 
 template <typename R>
-void RecordDepot<R>::record_matched_orders(const OverwritingVector<order::Matched>&  matched)
+void RecordDepot<R>::record_matched_orders(OverwritingVector<order::Matched>&  matched)
 {
+    /*while (!matched.empty())
+    {
+        matched_.push_back(matched.front());
+        matched.pop();
+    }*/
     for (const auto& m : matched)
         matched_.push_back(m);
 }
@@ -203,8 +202,6 @@ ID RecordDepot<R>::process_state_update(order::StateUpdate o)
     return o.id;
 }
 
-
-#endif //ORDERRECORDS_H
 
 
 #endif //ORDERBOOK_RECORDDEPOT_H

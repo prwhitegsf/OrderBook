@@ -36,15 +36,16 @@ int main()
         while (order_count-- && !orders.empty())
         {
             ob.submit_order(orders.front());
+            orders.pop();
             ob.evaluate_orders();
 
             ob.match_orders();
 
             rd.record_matched_orders(ob.get_matched_orders());
 
-            rd.clear_matched();
 
-            orders.pop();
+            //rd.update_order_records();
+            rd.clear_matched();
         }
 
         const long dur = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start).count();
@@ -52,6 +53,7 @@ int main()
         std::cout<<"Full Processing"<<std::endl;
         std::cout<<"1M orders / "<<dur<<"ms"<<std::endl;
         std::cout<<std::endl;
+        std::cout<<"Accepted: "<<rd.accepted().size()<<" Completed: "<<rd.completed().size()<<std::endl;
     }
 
     return 0;

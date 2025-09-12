@@ -104,7 +104,7 @@ TEST_F(OrderRecordsTest,StateUpdateWithMove)
     }
 
     ors.record_matched_orders(matched);
-    EXPECT_EQ(matched.size(),4);
+    EXPECT_EQ(matched.size(),0);
     matched.clear();
 
     ors.update_order_records();

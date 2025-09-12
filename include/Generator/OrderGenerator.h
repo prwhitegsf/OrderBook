@@ -21,22 +21,21 @@
 #include "Record.h"
 #include "RecordDepot.h"
 
-/// @brief random order generator
-
-
 
 
 namespace gen
 {
 
-
+    /// @brief random order generator
     class OrderGenerator
     {
 
     public:
-        std::queue<order::Submitted> orders_q;
-        std::queue<order::Submitted> recorded_orders;
 
+
+        /// @brief, holds recorded orders
+        std::queue<order::Submitted> recorded_orders;
+        /// @brief holds info about the ordered generated
         std::unordered_map<std::string, int> submitted_stats;
 
         OrderGenerator();
@@ -62,6 +61,7 @@ namespace gen
         bool binomial(double prob);
 
         std::vector<Qty> local_dom_;
+        std::queue<order::Submitted> orders_q;
         void make_dom(const OrderBook<Fifo>& ob, Qty initial_order_count=1000);
         void make_initial_orders(const OrderBook<Fifo>& ob, Qty max_qty);
 

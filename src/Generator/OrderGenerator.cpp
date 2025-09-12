@@ -26,25 +26,7 @@ namespace gen
         seed_engine(seed);
     }
 
-    void OrderGenerator::initialize_orderbook(
-        OrderBook<Fifo>& ob,RecordDepot<order::Record>& rd,
-        const Qty initial_order_count, const Qty max_qty)
-    {
-        make_dom(ob,initial_order_count);
-        make_initial_orders(ob,max_qty);
 
-        while (!orders_q.empty())
-        {
-            rd.make_order_record(orders_q.front());
-            ob.submit_order(orders_q.front());
-            orders_q.pop();
-
-            ob.evaluate_orders();
-            ob.match_orders();
-            rd.record_matched_orders(ob.get_matched_orders());
-            rd.update_order_records();
-        }
-    }
 
     order::Submitted OrderGenerator::record_order(order::Submitted&& o)
     {
@@ -179,6 +161,25 @@ namespace gen
 
             if (price < local_dom_.size())
                 ++local_dom_.at(price);
+        }
+    }
+    void OrderGenerator::initialize_orderbook(
+           OrderBook<Fifo>& ob,RecordDepot<order::Record>& rd,
+           const Qty initial_order_count, const Qty max_qty)
+    {
+        make_dom(ob,initial_order_count);
+        make_initial_orders(ob,max_qty);
+
+        while (!orders_q.empty())
+        {
+            rd.make_order_record(orders_q.front());
+            ob.submit_order(orders_q.front());
+            orders_q.pop();
+
+            ob.evaluate_orders();
+            ob.match_orders();
+            rd.record_matched_orders(ob.get_matched_orders());
+            rd.update_order_records();
         }
     }
 

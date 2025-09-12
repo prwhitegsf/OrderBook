@@ -26,15 +26,16 @@
         - the maximum number of prices a market order can execute over at once (protection)
     - An interface for querying the Dom
     - Evaluator
-        - a set of functions for
-            - updating the Dom when new orders are excepted
-            - rejecting orders
-            - splitting market and limit orders into market limit orders where appropriate
+        - a set of functions for processing the order based on its price and type
+        - updates the Dom when new orders are accepted
+        - converts market orders to market limit when order qty > total qty between best price and protection
+        - converts limit orders to market limit when limit price is worse than best market price
+        - rejects limit orders outside of allowed price range
     - A Matching strategy
         - different markets use different algorithms to match orders
-        - so we inject our matcher into the order book via a template
+        - so we inject our matcher into the order book via a template strategy pattern
         - we use our Matcher Concept file to define the required interface a matching strategy must have
-        - our strategy is First In, First Out (Fifo), see above
+        - our strategy is First In, First Out (Fifo)
     - Containers for holding orders in various states of process
  *  Initialized with an Instrument object
  * @tparam Matcher Inject Matching engine via strategy pattern
@@ -58,15 +59,18 @@ public:
     /// @param o incoming order from client api or order generator
     void submit_order(order::Submitted o);;
 
-    /// @ brief determine order validity, update dom, and split order if needed
+    /// @ brief determines order validity, reject as needed
+    /// updates dom
+    /// and converts order to market-limit as needed
     void evaluate_orders();
 
     /// @brief connects ids and quantities with orders to record transactions/fills
     void match_orders();
+    void match_next_order();
 
-    /// @brief move processed orders out of OrderBook, typically to Record Depot
-    /// @return pair of vectors containing all OrderFills and StateUpdates from last transaction
-    const OverwritingVector<order::Matched>& get_matched_orders();
+    /// @brief move matched orders to Record Depot
+    /// @return a reference to matched_
+    OverwritingVector<order::Matched>& get_matched_orders();
 
     //Dom Interface
     /// @return best bid price
@@ -96,11 +100,13 @@ public:
     /// @return a vector containing the number of orders at each price
     std::vector<int> order_counts();
 
+    /// @brief order count by price
+    /// @return get the number of limit orders at a price
     [[nodiscard]] Qty count(Price idx) const;
 
-    void match(auto&& order);
 
-    void match_next_order();
+
+
 
 private:
 
@@ -111,17 +117,16 @@ private:
     Dom d_;
     Evaluator evaluator_;
 
+    // holds incoming orders
     std::queue<order::Submitted> submitted_q_;
-
+    // holds evaluated orders
     std::queue<order::Pending> pending_q_;
-    std::mutex pending_mutex_;
-
+    // holds matched orders
     OverwritingVector<order::Matched> matched_;
-    std::mutex matched_mutex_;
 
-    void push_matched(const order::StateUpdate& state_update);
-
-    void push_matched(const order::Matched& matched);
+    void match(auto&& order);
+    void push_to_matched(const order::StateUpdate& state_update);
+    void push_to_matched(const order::Matched& matched);
 };
 
 
@@ -150,6 +155,7 @@ void OrderBook<Matcher>::evaluate_orders()
 template <Is_Matcher Matcher>
 void OrderBook<Matcher>::match_orders()
 {
+
     while (!pending_q_.empty())
     {
         match(pending_q_.front());
@@ -161,19 +167,17 @@ void OrderBook<Matcher>::match_orders()
 template <Is_Matcher Matcher>
 void OrderBook<Matcher>::match(auto&& order)
 {
-
     matched_.clear();
-
     std::visit([this](auto&& o)
     {
-
-        push_matched(matcher_.match(o));
+        push_to_matched(matcher_.match(o));
 
     },order);
 }
 
 template <Is_Matcher Matcher>
 void OrderBook<Matcher>::match_next_order() {
+
 
     if (!pending_q_.empty())
     {
@@ -183,7 +187,7 @@ void OrderBook<Matcher>::match_next_order() {
 }
 
 template <Is_Matcher Matcher>
-void OrderBook<Matcher>::push_matched(const order::StateUpdate& state_update) {
+void OrderBook<Matcher>::push_to_matched(const order::StateUpdate& state_update) {
     auto& m = matched_.next();
     m.state_update = state_update;
     m.market_fill.id = 0;
@@ -192,16 +196,18 @@ void OrderBook<Matcher>::push_matched(const order::StateUpdate& state_update) {
 }
 
 template <Is_Matcher Matcher>
-void OrderBook<Matcher>::push_matched(const order::Matched& matched) {
-    auto& m = matched_.next();
+void OrderBook<Matcher>::push_to_matched(const order::Matched& matched) {
+
+    matched_.push_back(matched);
+    /*auto& m = matched_.next();
     m.market_fill = matched.market_fill;
     m.partial_fill = matched.partial_fill;
     m.limit_fills = matched.limit_fills;
-    m.state_update.id = 0;
+    m.state_update.id = 0;*/
 }
 
 template <Is_Matcher Matcher>
-const OverwritingVector<order::Matched>& OrderBook<Matcher>::get_matched_orders()
+OverwritingVector<order::Matched>& OrderBook<Matcher>::get_matched_orders()
 {
     return matched_;
 }

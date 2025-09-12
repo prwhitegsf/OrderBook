@@ -28,7 +28,7 @@ void Evaluator::evaluate_order(order::BuyLimit o) const
     }
     else // rejection
     {
-        push_accepted(order::Rejected(o.id,o.qty,o.price));
+        push_to_pending(order::Rejected(o.id,o.qty,o.price));
     }
 
 }
@@ -49,7 +49,7 @@ void Evaluator::evaluate_order(order::BuyLimit o) const
 
     if (!qty) // if we've completely filled the order, we're done
     {
-        push_accepted(o);
+        push_to_pending(o);
     }
     else
     {
@@ -57,13 +57,13 @@ void Evaluator::evaluate_order(order::BuyLimit o) const
         {
             subtract_depth(d_.ask,qty);
             next_non_zero_ask();
-            push_accepted(o);
+            push_to_pending(o);
         }
         else // but if we reached limit, convert to market limit
         {
             d_.bid = limit;
             set_depth(d_.bid, qty);
-            push_accepted(order::BuyMarketLimit(o.id,o.qty - d_.dom[d_.bid],o.price,d_.dom[d_.bid],d_.bid));
+            push_to_pending(order::BuyMarketLimit(o.id,o.qty - d_.dom[d_.bid],o.price,d_.dom[d_.bid],d_.bid));
         }
     }
 }
@@ -84,7 +84,7 @@ void Evaluator::evaluate_order(order::BuyLimit o) const
     }
     else // rejected
     {
-        push_accepted(order::Rejected(o.id,o.qty,o.price));
+        push_to_pending(order::Rejected(o.id,o.qty,o.price));
     }
 }
 
@@ -103,7 +103,7 @@ void Evaluator::evaluate_order(order::BuyLimit o) const
 
     if (!qty) // if we've completely filled the order, we're done
     {
-        push_accepted(o);
+        push_to_pending(o);
     }
     else
     {
@@ -111,13 +111,13 @@ void Evaluator::evaluate_order(order::BuyLimit o) const
         {
             subtract_depth(d_.bid,qty);
             next_non_zero_bid();
-            push_accepted(o);
+            push_to_pending(o);
         }
         else // but if we reached limit, convert to market limit
         {
             d_.ask = limit;
             set_depth(d_.ask, qty);
-            push_accepted(order::SellMarketLimit(o.id,o.qty - d_.dom[d_.ask],o.price, d_.dom[d_.ask],d_.ask));
+            push_to_pending(order::SellMarketLimit(o.id,o.qty - d_.dom[d_.ask],o.price, d_.dom[d_.ask],d_.ask));
         }
     }
 }
@@ -137,7 +137,7 @@ void Evaluator::evaluate_order(order::BuyLimit o) const
             next_non_zero_bid();
         }
     }
-    push_accepted(o);
+    push_to_pending(o);
 }
 
 
@@ -147,30 +147,30 @@ void Evaluator::evaluate_order(order::BuyLimit o) const
 
  void Evaluator::subtract_depth(const Price price, const Qty depth) const {d_.dom[price] -=  depth;}
 
- void Evaluator::push_accepted(order::Pending&& o) const {
+ void Evaluator::push_to_pending(order::Pending&& o) const {
     pending_q_.emplace(o);
 }
 
  void Evaluator::place_limit(order::BuyLimit o) const {
     add_depth(o.price,o.qty);
-    push_accepted(order::BuyLimit(o));
+    push_to_pending(order::BuyLimit(o));
 }
 
  void Evaluator::place_limit(order::SellLimit o) const {
     add_depth(o.price,o.qty);
-    push_accepted(order::SellLimit(o));
+    push_to_pending(order::SellLimit(o));
 }
 
  void Evaluator::place_limit_inside_spread(order::BuyLimit o, Price& update_price) const {
     add_depth(o.price,o.qty);
     update_price = o.price;
-    push_accepted(order::BuyLimit(o));
+    push_to_pending(order::BuyLimit(o));
 }
 
  void Evaluator::place_limit_inside_spread(order::SellLimit o, Price& update_price) const {
     add_depth(o.price,o.qty);
     update_price = o.price;
-    push_accepted(order::SellLimit(o));
+    push_to_pending(order::SellLimit(o));
 }
 
  Price Evaluator::fill_level(const Price price, Qty& qty) const {

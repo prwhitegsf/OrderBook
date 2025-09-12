@@ -12,17 +12,16 @@
 #include "MatchedOrders.h"
 #include "Dom.h"
 
+
+
 /**
- * @brief accepts, rejects and splits orders as needed, updates dom
- * Split and accepted orders get pushed to accepted_q_ where they will
- * get matched by the matcher
- * Rejected orders have their state updated to Rejected and do not get sent to the matcher
+ * @brief accepts, converts and rejects orders as needed, updates dom
+ * Orders are pushed to pending_q_ where they will get matched by the matcher
  */
 class Evaluator
 {
     Dom& d_;
     std::queue<order::Pending>& pending_q_;
-
 
     void set_depth(Price price, Qty depth) const;
     void add_depth(Price price, Qty depth) const;
@@ -42,13 +41,14 @@ class Evaluator
     void place_limit_inside_spread(order::BuyLimit o, Price& update_price) const;
     void place_limit_inside_spread(order::SellLimit o, Price& update_price) const;
 
-    void push_accepted (order::Pending&& o)const;
+    void push_to_pending (order::Pending&& o)const;
 
 public:
-    ///
+
     /// @param dom reference to dom
     /// @param pending_q reference to accepted
     Evaluator(Dom& dom, std::queue<order::Pending>& pending_q);
+
 
     void evaluate_order(order::BuyLimit o) const;
     void evaluate_order(order::BuyMarket o) const;
@@ -57,6 +57,4 @@ public:
     void evaluate_order(order::Cancel o) const;
 
 };
-
-
 #endif //ORDERBOOK_EVALUATOR_H
