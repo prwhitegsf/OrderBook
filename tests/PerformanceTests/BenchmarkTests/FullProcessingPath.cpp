@@ -53,7 +53,7 @@ int main()
         std::cout<<"Full Processing"<<std::endl;
         std::cout<<"1M orders / "<<dur<<"ms"<<std::endl;
         std::cout<<std::endl;
-        std::cout<<"Accepted: "<<rd.accepted().size()<<" Completed: "<<rd.completed().size()<<std::endl;
+
     }
 
     return 0;

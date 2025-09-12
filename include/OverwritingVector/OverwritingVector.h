@@ -6,11 +6,12 @@
 #define ORDERBOOK_OVERWRITINGVECTOR_H
 
 #include <vector>
-#include <iostream>
-#include <span>
 
 
-
+/**
+ * @brief Container wrapping vector with goal of minimizing memory allocations
+ * by overwriting contents
+ */
 template<typename T>
 class OverwritingVector
 {
@@ -19,8 +20,6 @@ class OverwritingVector
     size_t begin_;
 
 public:
-    /*explicit OverwritingVector(const size_t size) : data_(size) {}
-    explicit OverwritingVector(const size_t size, const size_t end) : data_(size), end_(end) {}*/
 
     explicit OverwritingVector(const size_t size, const size_t end = 0) : data_(size), end_(end), begin_(0) {}
 
@@ -57,16 +56,10 @@ public:
     const T& back() const { return data_[end_-1]; }
 
     void push_back(const T& item);
-    void pop()
-    {
-        ++begin_;
-        if (begin_ >= end_) clear();
-    }
+    void pop();
 
-    T& next();
 
-    //unused, but still thinking about it
-    std::span<T> take();
+
 };
 
 template <typename T>
@@ -99,24 +92,13 @@ void OverwritingVector<T>::push_back(const T& item)
 }
 
 template <typename T>
-T& OverwritingVector<T>::next() {
-
-    ++end_;
-    if (end_ == data_.size()) // trigger vector resize
-    {
-        data_.push_back({});
-    }
-
-    return data_[end_-1];
+void OverwritingVector<T>::pop() {
+    ++begin_;
+    if (begin_ >= end_) clear();
 }
 
-template <typename T>
-std::span<T> OverwritingVector<T>::take()
-{
-    auto s = std::span{data_}.subspan(0,end_);
-    clear();
-    return s;
-}
+
+
 
 
 #endif //ORDERBOOK_OVERWRITINGVECTOR_H

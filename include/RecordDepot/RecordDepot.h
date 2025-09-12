@@ -99,13 +99,11 @@ void RecordDepot<R>::timestamp()
 template <typename R>
 void RecordDepot<R>::record_matched_orders(OverwritingVector<order::Matched>&  matched)
 {
-    /*while (!matched.empty())
+    while (!matched.empty())
     {
         matched_.push_back(matched.front());
         matched.pop();
-    }*/
-    for (const auto& m : matched)
-        matched_.push_back(m);
+    }
 }
 
 

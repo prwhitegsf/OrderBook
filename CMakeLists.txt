@@ -62,15 +62,7 @@ target_include_directories(benchmarks PUBLIC
 find_package(benchmark CONFIG REQUIRED)
 target_link_libraries(benchmarks PRIVATE benchmark::benchmark benchmark::benchmark_main)
 
-# Save benchmarks to file
-string(TIMESTAMP current_time_utc UTC)
-add_custom_target(save_benchmarks
-        COMMAND $<TARGET_FILE:benchmarks>
-        "--benchmark_out=${CMAKE_CURRENT_SOURCE_DIR}/tests/PerformanceTests/BenchmarkReports/FifoBench_${current_time_utc}.json"
-        "--benchmark_out_format=json"
-        VERBATIM
-)
-add_dependencies(save_benchmarks benchmarks)
+
 
 # Throughput Tests
 set(THROUGHPUT

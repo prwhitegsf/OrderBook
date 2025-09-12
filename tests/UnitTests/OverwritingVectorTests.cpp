@@ -56,32 +56,6 @@ TEST_F(OVTests, PushBack)
     }
 }
 
-TEST_F(OVTests, Take)
-{
-    OverwritingVector<int> ov;
-    for (int i{}; i < 10; ++i)
-    {
-        ov.push_back(i);
-    }
-
-    EXPECT_TRUE(ov.capacity() >= 10);
-    EXPECT_EQ(ov.size(), 10);
-    for (int i{}; i < 10; ++i)
-    {
-        EXPECT_EQ(ov[i],i);
-    }
-
-    std::span s = ov.take();
-
-
-    EXPECT_EQ(ov.size(), 0);
-    EXPECT_EQ(s.size(), 10);
-    for (int i{}; i < 10; ++i)
-    {
-        EXPECT_EQ(s[i],i);
-    }
-}
-
 TEST_F(OVTests,CopyOp)
 {
     OverwritingVector<int> ov1;

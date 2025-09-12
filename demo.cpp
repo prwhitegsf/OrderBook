@@ -10,7 +10,7 @@
 
 int main()
 {
-        size_t iterations{100000};           // number of trades to simulate after initialization
+        size_t iterations{10000};           // number of trades to simulate after initialization
         constexpr size_t dom_window{5};     // number of prices on either side of bid/ask to display depth for
         constexpr size_t wait{0};           // pause (in ms) between trades
         constexpr size_t max_qty{100};
@@ -19,6 +19,7 @@ int main()
         RecordDepot<order::Record> record_depot;
 
         gen::OrderGenerator order_gen;
+        // fill the orderbook with an initial set of limit orders to buy/se
         order_gen.initialize_orderbook(order_book,record_depot);
 
         auto order_book_processing = [&](auto&& o)
@@ -36,9 +37,9 @@ int main()
             record_depot.record_matched_orders(order_book.get_matched_orders());
             record_depot.update_order_records();
 
-            /*printer::print_trade_records(record_depot);
+            printer::print_trade_records(record_depot);
             printer::print_bid_ask(std::cout,order_book);
-            printer::print_dom(std::cout,order_book,dom_window);*/
+            printer::print_dom(std::cout,order_book,dom_window);
 
             if (order_book.bid() <= order_book.min_price() || order_book.ask() >= order_book.max_price())
             {
@@ -46,7 +47,7 @@ int main()
                 break;
             }
 
-           // std::this_thread::sleep_for(std::chrono::milliseconds(wait));
+            std::this_thread::sleep_for(std::chrono::milliseconds(wait));
         }
 
 

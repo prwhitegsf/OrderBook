@@ -51,16 +51,7 @@ namespace order
         {
             if (this != &other)
             {
-                if (!other.limit_fills.empty())
-                {
-                    limit_fills.clear();
-                    for (auto id : other.limit_fills)
-                        if (id)
-                            limit_fills.push_back(id);
-                }
-                else
-                    limit_fills.clear();
-
+                limit_fills = other.limit_fills;
                 partial_fill = other.partial_fill;
                 market_fill = other.market_fill;
                 state_update = other.state_update;
@@ -68,7 +59,6 @@ namespace order
 
             return *this;
         }
-
 
 
         void clear()

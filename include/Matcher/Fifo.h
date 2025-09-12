@@ -28,17 +28,32 @@ public:
     Fifo() = delete;
     explicit Fifo(const int num_prices) : level_(num_prices){}
 
+    /// @brief match BuyMarket
+    /// @return matched orders resulting from market order
     const order::Matched& match(order::BuyMarket o);
+    /// @brief match SellMarket
+    /// @return matched orders resulting from market order
     const order::Matched& match(order::SellMarket o);
-
+    /// @brief match BuyMarketLimit
+    /// @return matched orders resulting from market limit order
     const order::Matched& match(order::BuyMarketLimit o);
+    /// @brief match SellMarketLimit
+    /// @return matched orders resulting from market limit order
     const order::Matched& match(order::SellMarketLimit o);
 
-    const order::StateUpdate& match(order::BuyLimit o);
-    const order::StateUpdate& match(order::SellLimit o);
+    /// @brief match BuyLimit
+    /// @return matched orders with state updated limit order
+    const order::Matched& match(order::BuyLimit o);
+    /// @brief match SellLimit
+    /// @return matched orders with state updated limit order
+    const order::Matched& match(order::SellLimit o);
 
-    const order::StateUpdate& match(order::Cancel o);
-    const order::StateUpdate& match(order::Rejected o);
+    /// @brief find resting order and remove
+    /// @return matched with state updated cancelled limit order
+    const order::Matched& match(order::Cancel o);
+    /// @brief rejected order
+    /// @return matched with state updated rejected order
+    const order::Matched& match(order::Rejected o);
 
     [[nodiscard]] const Level& level(size_t idx)const;
 
@@ -51,7 +66,7 @@ private:
     void reset_matched(ID id, Qty qty);
     void reset_matched(ID id, order::OrderState state);
 
-    const order::StateUpdate& limit(auto o);
+    const order::Matched& limit(auto o);
     const order::Matched& market(auto o, auto&& dir);
     const order::Matched& market_limit(auto o, auto&& dir);
     int fill_level(auto& o);

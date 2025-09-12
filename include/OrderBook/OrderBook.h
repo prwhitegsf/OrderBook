@@ -125,7 +125,7 @@ private:
     OverwritingVector<order::Matched> matched_;
 
     void match(auto&& order);
-    void push_to_matched(const order::StateUpdate& state_update);
+
     void push_to_matched(const order::Matched& matched);
 };
 
@@ -167,7 +167,7 @@ void OrderBook<Matcher>::match_orders()
 template <Is_Matcher Matcher>
 void OrderBook<Matcher>::match(auto&& order)
 {
-    matched_.clear();
+  //  matched_.clear();
     std::visit([this](auto&& o)
     {
         push_to_matched(matcher_.match(o));
@@ -178,7 +178,7 @@ void OrderBook<Matcher>::match(auto&& order)
 template <Is_Matcher Matcher>
 void OrderBook<Matcher>::match_next_order() {
 
-
+    matched_.clear();
     if (!pending_q_.empty())
     {
         match(pending_q_.front());
@@ -186,24 +186,12 @@ void OrderBook<Matcher>::match_next_order() {
     }
 }
 
-template <Is_Matcher Matcher>
-void OrderBook<Matcher>::push_to_matched(const order::StateUpdate& state_update) {
-    auto& m = matched_.next();
-    m.state_update = state_update;
-    m.market_fill.id = 0;
-    m.partial_fill.id = 0;
-    m.limit_fills.clear();
-}
 
 template <Is_Matcher Matcher>
 void OrderBook<Matcher>::push_to_matched(const order::Matched& matched) {
 
     matched_.push_back(matched);
-    /*auto& m = matched_.next();
-    m.market_fill = matched.market_fill;
-    m.partial_fill = matched.partial_fill;
-    m.limit_fills = matched.limit_fills;
-    m.state_update.id = 0;*/
+
 }
 
 template <Is_Matcher Matcher>

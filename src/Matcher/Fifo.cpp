@@ -15,8 +15,8 @@ const Matched& Fifo::match(const BuyMarket o) { return market(o,std::plus<>()); 
 const Matched& Fifo::match(const SellMarket o) { return market(o,std::minus<>()); }
 const Matched& Fifo::match(const BuyMarketLimit o) { return market_limit(o,std::plus<>()); };
 const Matched& Fifo::match(const SellMarketLimit o) { return market_limit(o,std::minus<>()); }
-const StateUpdate& Fifo::match(const BuyLimit o) { return limit(Limit(o));}
-const StateUpdate& Fifo::match(const SellLimit o) { return limit(Limit(o));}
+const order::Matched& Fifo::match(const BuyLimit o) { return limit(Limit(o));}
+const order::Matched& Fifo::match(const SellLimit o) { return limit(Limit(o));}
 
 const Level& Fifo::level(const size_t idx) const { return level_[idx]; }
 
@@ -45,7 +45,7 @@ double Fifo::fill_price(const Price price, const Qty filled_qty, const Qty full_
 }
 
 
-const StateUpdate& Fifo::match(const Cancel o)
+const order::Matched& Fifo::match(const Cancel o)
 {
     const auto it = std::lower_bound(
         level_[o.price].orders.begin(),
@@ -62,24 +62,25 @@ const StateUpdate& Fifo::match(const Cancel o)
     level_[o.price].orders.erase(it);
     reset_matched(o.id,OrderState::CANCELLED);
     level_[o.price].depth -= o.qty;
-
-    return matched_.state_update;
+    return matched_;
+    //return matched_.state_update;
 }
 
-const StateUpdate& Fifo::match(const Rejected o)
+const order::Matched& Fifo::match(const Rejected o)
 {
     reset_matched(o.id,OrderState::REJECTED);
-    return matched_.state_update;
+    return matched_;
+    //return matched_.state_update;
 }
 
-const StateUpdate& Fifo::limit(auto o)
+const order::Matched& Fifo::limit(auto o)
 {
     // Limit orders are just placed into the level
     reset_matched(o.id,OrderState::ACCEPTED);
     level_[o.price].orders.emplace_back(o);
     level_[o.price].depth += o.qty;
-
-    return matched_.state_update;
+    return matched_;
+    //return matched_.state_update;
 }
 
 
