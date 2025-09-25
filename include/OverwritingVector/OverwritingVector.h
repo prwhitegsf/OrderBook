@@ -26,7 +26,7 @@ public:
     OverwritingVector() : data_(), end_(0), begin_(0) {};
     ~OverwritingVector() = default;
 
-    // copy
+   // copy
     OverwritingVector(const OverwritingVector& other) : data_(other.data_), end_(other.end_), begin_(other.begin_) {}
 
     // no moving allowed

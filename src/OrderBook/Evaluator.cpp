@@ -7,8 +7,6 @@
 //
 #include "Evaluator.h"
 
-#include <iostream>
-
 Evaluator::Evaluator(Dom& dom, std::queue<order::Pending>& pending_q)
                     : d_(dom), pending_q_(pending_q){}
 
